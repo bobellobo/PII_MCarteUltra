@@ -4,13 +4,13 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React, {useState, useEffect} from "react"
 import {View, ScrollView, Text, StyleSheet, Alert, KeyboardAvoidingView,Image, Platform, TextInput, TouchableOpacity, Keyboard} from "react-native"
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Partie } from '~/screens/Partie';
+import { PartieLocal } from '~/screens/PartieLocal';
 import {Header} from '~/components/Header';
 import { ModalPopUp } from "~/components/ModalPopUp"
 import * as ScreenOrientation from 'expo-screen-orientation';
 
 
-export const CreatePartie : React.FunctionComponent<{}> = ({}) => {
+export const CreatePartieLocal : React.FunctionComponent<{}> = ({}) => {
 
   
   ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
@@ -55,7 +55,7 @@ export const CreatePartie : React.FunctionComponent<{}> = ({}) => {
   const onLaunchPress = () => {
     if(playersList.length !=0){
 
-      navigation.navigate("Partie",{
+      navigation.navigate("PartieLocal",{
         playerList : playersList ,
       });
 

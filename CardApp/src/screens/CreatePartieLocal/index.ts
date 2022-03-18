@@ -1,0 +1,1 @@
+export { CreatePartieLocal } from "./CreatePartieLocal";

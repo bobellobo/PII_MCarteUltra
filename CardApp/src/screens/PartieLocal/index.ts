@@ -1,0 +1,1 @@
+export  {PartieLocal}  from "./PartieLocal";

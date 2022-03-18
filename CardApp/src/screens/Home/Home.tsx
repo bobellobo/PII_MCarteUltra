@@ -1,9 +1,11 @@
-import { useNavigation } from "@react-navigation/native";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
 import React from "react";
 import {View, Text, StyleSheet, TouchableOpacity} from "react-native";
 import { RouteParams } from "~/navigation/RootNavigator";
 import * as ScreenOrientation from 'expo-screen-orientation'
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import {firebase} from "~/firebase/config"
 
 
 interface HomeProps {}
@@ -13,9 +15,24 @@ export const Home : React.FunctionComponent<HomeProps> = ({}) => {
   ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
   const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
 
+  const signInTest=()=>{
+    firebase.default.auth()
+    .signInAnonymously()
+    .then(() => {
+      console.log('User signed in anonymously');
+    })
+    .catch(error => {
+      if (error.code === 'auth/operation-not-allowed') {
+        console.log('Enable anonymous in your firebase console.');
+      }
+  
+      console.error(error);
+    });
+  }
   const newGamePressed = () => {
-    navigation.navigate("CreatePartie");
+    navigation.navigate("CreatePartieLocal");
   };
+
   
   return(
     
@@ -26,15 +43,18 @@ export const Home : React.FunctionComponent<HomeProps> = ({}) => {
       <View style={{alignItems:"center", justifyContent:'center',marginBottom:20,}}> 
         <Text style={[styles.title,{marginBottom:20}]}>MCarte Ultra</Text>
       
-
+        <TouchableOpacity style={styles.menuButton}>
+          <Text style={styles.buttonText}>En ligne</Text>
+        </TouchableOpacity>
+        
         <TouchableOpacity style={styles.menuButton} onPress={()=>newGamePressed()}>
           <Text style={styles.buttonText}>Nouvelle partie</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.menuButton}>
           <Text style={styles.buttonText}>En ligne</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuButton}>
-          <Text style={styles.buttonText}>Paramètres</Text>
+        <TouchableOpacity onPress={()=>signInTest()}style={styles.menuButton}>
+          <Text style={styles.buttonText}>Sign In Test</Text>
         </TouchableOpacity>
 
       </View>

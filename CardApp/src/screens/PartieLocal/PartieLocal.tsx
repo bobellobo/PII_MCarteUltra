@@ -19,7 +19,7 @@ import { requireCard } from "~/ressources/imagesPaths"
 var deck : Deck;
 
 
-export const Partie : React.FunctionComponent<{}> = ({}) => {
+export const PartieLocal : React.FunctionComponent<{}> = ({}) => {
 
   const route = useRoute<RouteProp<RouteParams>>(); 
   const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();

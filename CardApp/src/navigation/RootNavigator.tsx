@@ -1,12 +1,16 @@
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {Home} from "~/screens/Home";
-import {CreatePartie} from "~/screens/CreatePartie/CreatePartie";
-import{Partie} from "~/screens/Partie";
+import {CreatePartieLocal} from "~/screens/CreatePartieLocal";
+import{PartieLocal} from "~/screens/PartieLocal/PartieLocal";
 
 export type RouteParams = {
     Home:undefined,
-    CreatePartie:undefined,
-    Partie : {
+    Create :undefined,
+    Join :undefined,
+    Game :undefined,   
+    Lobby : undefined,
+    CreatePartieLocal:undefined,
+    PartieLocal : {
         playerList : string[];
     };
 }
@@ -27,8 +31,8 @@ export const RootNavigator = () => {
             }}
             />
             <Stack.Screen 
-                name="CreatePartie"
-                component={CreatePartie}
+                name="CreatePartieLocal"
+                component={CreatePartieLocal}
                 options={{
                     animation:"slide_from_right",
                     title :'Nouvelle partie',
@@ -37,8 +41,8 @@ export const RootNavigator = () => {
             />
 
             <Stack.Screen 
-            name="Partie"
-            component={Partie}
+            name="PartieLocal"
+            component={PartieLocal}
             options ={{headerShown:false}}
             />
 

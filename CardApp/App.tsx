@@ -3,8 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { createStackNavigator } from "react-navigation-stack";
 import {NavigationContainer} from "@react-navigation/native";
 import { Home } from '~/screens/Home';
-import { Partie } from '~/screens/Partie';
+import { Partie } from '~/screens/PartieLocal';
 import { RootNavigator } from '~/navigation/RootNavigator';
+
 
 export default function App() {
   return (   
@@ -15,7 +16,6 @@ export default function App() {
 
   );
 }
-
 
 
 const styles = StyleSheet.create({

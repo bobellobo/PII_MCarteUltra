@@ -1,1 +1,0 @@
-export  {Partie}  from "./Partie";
