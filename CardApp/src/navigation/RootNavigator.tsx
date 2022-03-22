@@ -2,6 +2,7 @@ import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import {Home} from "~/screens/Home";
 import {CreatePartieLocal} from "~/screens/CreatePartieLocal";
 import{PartieLocal} from "~/screens/PartieLocal/PartieLocal";
+import {Create,Game,Join,Lobby} from "~/screens";
 
 export type RouteParams = {
     Home:undefined,
@@ -24,12 +25,14 @@ export const RootNavigator = () => {
         <Stack.Group>
 
             <Stack.Screen 
-            name="Home" 
-            component={Home}
-            options={{
-                headerShown :false
-            }}
-            />
+            name="Home"component={Home} options={{headerShown :false }}/>
+
+            <Stack.Screen name="Create" component={Create}options={{headerShown :false }}/>
+
+            <Stack.Screen name="Join"component={Join}options={{ headerShown :true}}/>
+
+            <Stack.Screen name="Game" component={Game} options={{headerShown :true}}/>
+
             <Stack.Screen 
                 name="CreatePartieLocal"
                 component={CreatePartieLocal}
@@ -39,12 +42,7 @@ export const RootNavigator = () => {
                     headerShown:false,
                 }}
             />
-
-            <Stack.Screen 
-            name="PartieLocal"
-            component={PartieLocal}
-            options ={{headerShown:false}}
-            />
+            <Stack.Screen name="PartieLocal"component={PartieLocal}options ={{headerShown:false}}/>
 
         </Stack.Group>
         

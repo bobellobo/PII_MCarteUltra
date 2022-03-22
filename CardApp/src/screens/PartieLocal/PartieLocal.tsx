@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from "react"
-import {View, Text, StyleSheet, Image,Modal, TouchableOpacity} from "react-native"
+import {View,Text,StyleSheet,Image,TouchableOpacity,Dimensions} from "react-native"
 import {RouteParams} from "~/navigation/RootNavigator"
 import {useRoute, useNavigation, RouteProp, NavigationContainer} from "@react-navigation/native"
 import * as ScreenOrientation from 'expo-screen-orientation'
@@ -10,9 +10,6 @@ import { ModalPopUp } from "~/components/ModalPopUp"
 import { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import { Home } from '~/screens/Home';
 import { requireCard } from "~/ressources/imagesPaths"
-
-
-
 
 
 
@@ -30,29 +27,33 @@ export const PartieLocal : React.FunctionComponent<{}> = ({}) => {
   //ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
 
   useEffect(()=>{
-    //console.log('Partie mounted.');
+    // componentDidMount
     setUp();
     return () => {
       setUp();
       setGameOverVisible(false);
     };
-  },[]);
+  },
+  // componentWillUnmount
+  []);
 
   const setUp = ()=>{
-
+    // Création d'un nouveau deck de cartes
     deck = new Deck();
+    // On mélange le deck.
     deck.shuffle();
+
     updateCurrentPlayer(playersList[0]);
-    updateNextPlayer(playersList[1]);
+    updateNextPlayer(playersList[-1]);
   }
   
-  // STATE MANAGEMENT
+  // GESTION DE L'ETAT
   const [lastCardPicked, updateLastCardPicked] = useState<Card>(); // Gestion état : cartes tirées
   const [currentPlayer, updateCurrentPlayer] = useState<string>('');
   const [nextPlayer, updateNextPlayer] = useState<string>('');
-  const [gameOverVisible, setGameOverVisible] = useState<boolean>(false);
+  const [gameOverVisible, setGameOverVisible] = useState<boolean>(false); // Apparition pop-up de fin de jeu.
   const [firstRound, setFirstRound] = useState<boolean>(true);
-  //const [cardPath, setCardPath] = useState<string>('~/ressources/cards/BackCovers/Emerald.png');
+
 
   let UNIQUE_PLAYER = playersList[0];
 
@@ -94,7 +95,7 @@ export const PartieLocal : React.FunctionComponent<{}> = ({}) => {
 
   const renderPlayerTurn = () => {
 
-      // S'IL N'Y A QU'UN JOUEUR.
+      // S'il n'y a qu'un joueur.
       if(playersList.length==1)
       {
         return(
@@ -108,7 +109,7 @@ export const PartieLocal : React.FunctionComponent<{}> = ({}) => {
         );
       }
       else{
-        // AFFICHAGE DIFFERENT S'IL S'AGIT DU PREMIER TOUR.
+        // Affichage différent s'il s'agit du premier tour.
         if(firstRound)
         {
           return(
@@ -123,7 +124,7 @@ export const PartieLocal : React.FunctionComponent<{}> = ({}) => {
           );
         }
 
-        // AFFICHAGE "NORMAL".
+        // Affichage normal.
         else
         {
           return(
@@ -144,23 +145,20 @@ export const PartieLocal : React.FunctionComponent<{}> = ({}) => {
       }
   }
 
-  // METHODE RENDER POUR L'AFFICHAGE DYNAMIQUE DES CARTES.
-
+  // Affichage dynamique des cartes.
   const renderCardImage = () =>
   {
     let suit = lastCardPicked?.suit as string;
     let value = lastCardPicked?.value as number;
 
-    // FONCTION requireCard IMPORTEE DEPUIS imagePaths.tsx POUR GENERER DYNAMIQUEMENT LES IMAGES DES CARTES.
+    //  requireCard() importée depuis imagePaths.tsx.
     let image = requireCard(suit,value);
     
       return(
         <Image 
             source={image}
-            resizeMode='contain'
-            style={{
-              maxHeight:0.6*380,
-              maxWidth:0.6*255,}}
+            resizeMode='stretch'
+            style={styles.card}
 
         />  
       )
@@ -197,14 +195,15 @@ export const PartieLocal : React.FunctionComponent<{}> = ({}) => {
             style={{borderColor :'black',borderWidth:1,borderRadius :7,}}>
               <Image 
               source={requireCard("BackCovers",3)}
-              resizeMode='contain'
-              style={{
-                maxHeight:0.6*380,
-                maxWidth:0.6*255,
-              }}         
+              resizeMode='stretch'
+              style={styles.card}         
               />            
             </TouchableOpacity>
-            <View style={styles.card}>{renderCardImage()}</View>
+            
+            {!firstRound &&
+              <View style={[styles.cardWrapper]}>{renderCardImage()}</View>
+            }
+            
             
         </View>
         
@@ -244,7 +243,17 @@ const styles = StyleSheet.create({
     fontSize:30,
     fontWeight:'400',
   },
- 
+  card :{
+    height:380/Dimensions.get('window').scale,
+    width:255/Dimensions.get('window').scale,
+    
+  },
+  cardWrapper :{
+    borderWidth:1,
+    borderColor:'black',
+    borderRadius:7,
+    margin : 10
+  },
   turnHeader : {
     flex:1,
     flexWrap : "wrap",
@@ -256,13 +265,6 @@ const styles = StyleSheet.create({
     left:0,
     width : '100%',
 
-  },
-
-  card :{
-    borderWidth:1,
-    borderColor:'black',
-    borderRadius:7,
-    margin : 10
   },
 
   board : {

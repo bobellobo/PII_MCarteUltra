@@ -6,7 +6,7 @@ import * as ScreenOrientation from 'expo-screen-orientation'
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {firebase} from "~/firebase/config"
-
+import Button from "~/components/Button"
 
 interface HomeProps {}
 
@@ -29,38 +29,22 @@ export const Home : React.FunctionComponent<HomeProps> = ({}) => {
       console.error(error);
     });
   }
-  const newGamePressed = () => {
-    navigation.navigate("CreatePartieLocal");
-  };
+
 
   
   return(
     
     <View style={styles.container}>
-
-    <View style = {{marginTop:20, paddingVertical : 90, paddingHorizontal : 20, justifyContent:'center'}}>
-
-      <View style={{alignItems:"center", justifyContent:'center',marginBottom:20,}}> 
-        <Text style={[styles.title,{marginBottom:20}]}>MCarte Ultra</Text>
-      
-        <TouchableOpacity style={styles.menuButton}>
-          <Text style={styles.buttonText}>En ligne</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.menuButton} onPress={()=>newGamePressed()}>
-          <Text style={styles.buttonText}>Nouvelle partie</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuButton}>
-          <Text style={styles.buttonText}>En ligne</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={()=>signInTest()}style={styles.menuButton}>
-          <Text style={styles.buttonText}>Sign In Test</Text>
-        </TouchableOpacity>
-
-      </View>
-    </View>
-    
-
+      <View style = {{paddingVertical : 30, paddingHorizontal : 20, justifyContent:'center'}}>
+        <View style={{alignItems:"center", justifyContent:'center',marginBottom:20,}}> 
+          <Text style={[styles.title,{marginBottom:20}]}>MCarte Ultra</Text>
+          <Button text="Nouvelle partie en local" onPress={()=>navigation.navigate("CreatePartieLocal")}/>
+          <Button text="Créer une partie" onPress={()=>navigation.navigate("Create")}/>
+          <Button text="Rejoindre" onPress={()=>navigation.navigate("Join")}/>
+          <Button text="Paramètres" onPress={()=>{}}/>
+          <Button text="Sign In Test" onPress={()=>signInTest()}/>
+        </View>
+      </View>   
     </View>
   )
 }
@@ -70,7 +54,6 @@ const styles = StyleSheet.create({
   container : {
     flex : 1,
     alignContent:'center',
-    paddingTop : 50,
   },
 
   title : {
