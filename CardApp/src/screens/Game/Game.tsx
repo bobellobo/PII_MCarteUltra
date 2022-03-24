@@ -1,13 +1,11 @@
 import React,{Component} from "react";
 import {StyleSheet,View,Text} from "react-native"
 
-export default class Game extends Component<{},{}>
+export const Game: React.FunctionComponent<{}> = ({}) =>
 {
-    state={
+    
 
-    }
-
-    render() {
+   
 
         return(
             <View style={styles.container}>
@@ -16,7 +14,7 @@ export default class Game extends Component<{},{}>
                 </Text>
             </View>
         )
-    }
+    
 }
 
 const styles = StyleSheet.create({

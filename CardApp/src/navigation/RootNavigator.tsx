@@ -9,11 +9,11 @@ export type RouteParams = {
     Create :undefined,
     Join :undefined,
     Game :undefined,   
-    Lobby : undefined,
+    Lobby : {
+        gameId : string;
+    },
     CreatePartieLocal:undefined,
-    PartieLocal : {
-        playerList : string[];
-    };
+    PartieLocal : undefined;
 }
 
 const Stack = createNativeStackNavigator<RouteParams>();

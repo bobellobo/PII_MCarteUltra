@@ -1,13 +1,9 @@
 import React,{Component} from "react";
 import {StyleSheet,View,Text} from "react-native"
 
-export default class Join extends Component<{},{}>
+export const Join : React.FunctionComponent<{}> = ({}) =>
 {
-    state={
-
-    }
-
-    render() {
+    
 
         return(
             <View style={styles.container}>
@@ -16,7 +12,7 @@ export default class Join extends Component<{},{}>
                 </Text>
             </View>
         )
-    }
+    
 }
 
 const styles = StyleSheet.create({

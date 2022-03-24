@@ -1,10 +1,8 @@
-import { NavigationContainer, useNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 import { RouteParams } from "~/navigation/RootNavigator";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, {useState, useEffect} from "react"
-import {View, ScrollView, Text, StyleSheet, Alert, KeyboardAvoidingView,Image, Platform, TextInput, TouchableOpacity, Keyboard} from "react-native"
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { PartieLocal } from '~/screens/PartieLocal';
+import React, {useState} from "react"
+import {View, ScrollView, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform, TextInput, TouchableOpacity, Keyboard} from "react-native"
 import {Header} from '~/components/Header';
 import { ModalPopUp } from "~/components/ModalPopUp"
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -38,9 +36,6 @@ export const CreatePartieLocal : React.FunctionComponent<{}> = ({}) => {
     } ;  
   };
 
-  // useEffect(()=>{
-  //   console.log('updated playersList : \n', playersList);
-  // },[playersList])
 
 
 
@@ -49,7 +44,6 @@ export const CreatePartieLocal : React.FunctionComponent<{}> = ({}) => {
     let playerListCopy = [...playersList];  
     playerListCopy.splice(index,1);
     setPlayersList(playerListCopy);
-    
   };
 
   const onLaunchPress = () => {

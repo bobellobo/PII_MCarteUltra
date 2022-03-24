@@ -1,6 +1,6 @@
 
 import React from "react";
-import {View, Text, StyleSheet, TouchableOpacity} from "react-native";
+import {View, Text, StyleSheet, TouchableOpacity, Dimensions} from "react-native";
 import { RouteParams } from "~/navigation/RootNavigator";
 import * as ScreenOrientation from 'expo-screen-orientation'
 import { useNavigation } from "@react-navigation/native";
@@ -11,10 +11,7 @@ import Button from "~/components/Button"
 interface HomeProps {}
 
 export const Home : React.FunctionComponent<HomeProps> = ({}) => {
-
-  ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
   const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
-
   const signInTest=()=>{
     firebase.default.auth()
     .signInAnonymously()
@@ -35,9 +32,9 @@ export const Home : React.FunctionComponent<HomeProps> = ({}) => {
   return(
     
     <View style={styles.container}>
-      <View style = {{paddingVertical : 30, paddingHorizontal : 20, justifyContent:'center'}}>
-        <View style={{alignItems:"center", justifyContent:'center',marginBottom:20,}}> 
-          <Text style={[styles.title,{marginBottom:20}]}>MCarte Ultra</Text>
+      <View style = {{paddingVertical : Dimensions.get('screen').height/4, paddingHorizontal : 20, justifyContent:'center'}}>
+        <View style={{alignItems:"center", justifyContent:'center'}}> 
+          <Text style={[styles.title,{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%'}]}>MCarte Ultra</Text>
           <Button text="Nouvelle partie en local" onPress={()=>navigation.navigate("CreatePartieLocal")}/>
           <Button text="Créer une partie" onPress={()=>navigation.navigate("Create")}/>
           <Button text="Rejoindre" onPress={()=>navigation.navigate("Join")}/>

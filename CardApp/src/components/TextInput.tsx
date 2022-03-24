@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
         paddingRight: Dimensions.get('screen').width/15,
         minWidth: '85%',
         maxWidth: '85%',
-        color: "#ffffff",
+        color: "black",
         backgroundColor: '#ffffff',
         borderRadius: Dimensions.get('screen').height,
         height: Dimensions.get('screen').height/12,
