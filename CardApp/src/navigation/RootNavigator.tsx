@@ -5,15 +5,15 @@ import{PartieLocal} from "~/screens/PartieLocal/PartieLocal";
 import {Create,Game,Join,Lobby} from "~/screens";
 
 export type RouteParams = {
-    Home:undefined,
-    Create :undefined,
-    Join :undefined,
-    Game :undefined,   
-    Lobby : {
-        gameId : string;
-    },
-    CreatePartieLocal:undefined,
-    PartieLocal : undefined;
+    Home:undefined;
+    Create :undefined;
+    Join :undefined;
+    Game :undefined; 
+    Lobby :{id:string};
+    CreatePartieLocal:undefined;
+    PartieLocal : {
+        playerList : string[] 
+    };
 }
 
 const Stack = createNativeStackNavigator<RouteParams>();
@@ -29,7 +29,8 @@ export const RootNavigator = () => {
 
             <Stack.Screen name="Create" component={Create}options={{headerShown :false }}/>
 
-            <Stack.Screen name="Join"component={Join}options={{ headerShown :true}}/>
+            <Stack.Screen name="Join"component={Join}options={{ headerShown :false}}/>
+            <Stack.Screen name="Lobby" component={Lobby}options={{headerShown :false }}/>
 
             <Stack.Screen name="Game" component={Game} options={{headerShown :true}}/>
 

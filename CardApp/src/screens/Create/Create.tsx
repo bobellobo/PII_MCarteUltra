@@ -5,26 +5,24 @@ import TextInput from "~/components/TextInput"
 import { StackNavigationState, useNavigation } from "@react-navigation/native";
 import { createNativeStackNavigator, NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RouteParams } from "~/navigation/RootNavigator";
-import { Join } from "..";
+import { Join,Lobby } from "..";
 import {firebase} from "~/firebase/config"
 import rand from 'random-seed';
+import { NavigationStackProp } from "react-navigation-stack";
 
-interface CreateProps {
-}
 
-export const Create : React.FunctionComponent<CreateProps> = ({}) =>
+
+export const Create  = (props:{navigation:any,route:any}) =>
 {
     
     const [playerName,setPlayerName] = useState<string>('')
-    const [navigation, setNavigation] = useState<NativeStackNavigationProp<RouteParams>>()
-    const [gameId,setGameId] = useState<string>('');
-
+    const [gameId,setGameId] = useState<string>('default');
+    
     var database = firebase.default.database();
     
     useEffect(()=>{
         // componentDidMount
-        console.log('Create did mount')
-        setNavigation(useNavigation<NativeStackNavigationProp<RouteParams>>());       
+        console.log('Create did mount') 
         // Instancier la BDD.
         return () => {
           // componentWillUnmount
@@ -33,35 +31,29 @@ export const Create : React.FunctionComponent<CreateProps> = ({}) =>
         };
       },[]);
 
-    useEffect(()=> {
-        // CODE HERE
-        //console.log(playerName) 
-      },[playerName]);
+
 
       const onSubmit = () => {
 
         Keyboard.dismiss();
-        createGame();
+               
+        var id = createGameID();
+        createGameDB(id);
+        props.navigation.navigate("Lobby",{
+          id : id,
+          playerName : playerName,
+        })
         setPlayerName('');
-        // navigation?.navigate('Lobby',{
-        //   gameId : gameId
-        // })
-                
       }
 
-      const createGame = () => {       
-          let gameId = createGameID();
-          setGameId(gameId);
+      const createGameDB = (id:string) => {
           // Checker la s'il n'y a pas déjà une partie avec le même ID dans la BDD. while()do{}
-          console.log("Game ID : ",gameId);
-
           // Instancier une nouvelle table dans la BDD.
-          database.ref('games/'+gameId).set({
+          database.ref('games/'+id).set({
             host : playerName,
-            status : 'waitingForPlayers'
+            status : 'lobby'
           })
-          database.ref('players/'+gameId).set({
-            name : playerName,
+          database.ref('players/'+id+'/'+playerName).set({
             role : 'host'
           })
           // Games --> id --> états relatifs à la partie

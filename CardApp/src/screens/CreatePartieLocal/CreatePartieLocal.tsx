@@ -7,12 +7,15 @@ import {Header} from '~/components/Header';
 import { ModalPopUp } from "~/components/ModalPopUp"
 import * as ScreenOrientation from 'expo-screen-orientation';
 
+interface CreatePartieLocalProps {
+  navigation : any;
+} // Sinon useNavigation
 
-export const CreatePartieLocal : React.FunctionComponent<{}> = ({}) => {
+export const CreatePartieLocal  = (props : CreatePartieLocalProps) => {
 
   
   ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
-  const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
+  
 
   // STATE LISTE JOUEURS + TEXT INPUT
 
@@ -49,7 +52,7 @@ export const CreatePartieLocal : React.FunctionComponent<{}> = ({}) => {
   const onLaunchPress = () => {
     if(playersList.length !=0){
 
-      navigation.navigate("PartieLocal",{
+      props.navigation.navigate("PartieLocal",{
         playerList : playersList ,
       });
 

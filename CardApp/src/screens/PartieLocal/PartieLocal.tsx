@@ -14,13 +14,16 @@ import { requireCard } from "~/ressources/imagesPaths"
 
 
 var deck : Deck;
+interface PartieLocalProps {
+  navigation :any,
+  route : any
+}
 
+export const PartieLocal  = (props : PartieLocalProps) => {
 
-export const PartieLocal : React.FunctionComponent<{}> = ({}) => {
-
-  const route = useRoute<RouteProp<RouteParams>>(); 
-  const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
-  const playersList = route.params?.playerList as string[];
+   
+  
+  const playersList = props.route.params?.playerList as string[];
   
   
   ScreenOrientation.unlockAsync();
@@ -175,7 +178,7 @@ export const PartieLocal : React.FunctionComponent<{}> = ({}) => {
         <Text style={styles.title}>Partie terminée !</Text>
         <TouchableOpacity style={styles.gameEndedButton} onPress={()=>{
           setGameOverVisible(false);
-          navigation.navigate("Home");
+          props.navigation.navigate("Home");
           }}>
           <Text>Retour à l'accueil</Text>
         </TouchableOpacity>

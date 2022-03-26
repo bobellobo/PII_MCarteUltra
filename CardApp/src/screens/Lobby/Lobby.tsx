@@ -1,12 +1,45 @@
-import React,{Component,useState} from "react";
+import React,{Component,useState,useEffect} from "react";
 import {StyleSheet,View,Text,Dimensions} from "react-native"
-import {useRoute, useNavigation, RouteProp, NavigationContainer} from "@react-navigation/native"
+import {useRoute, useNavigation, RouteProp, } from "@react-navigation/native"
 import {RouteParams} from "~/navigation/RootNavigator"
+import { NavigationStackProp } from "react-navigation-stack";
 
-export const Lobby: React.FunctionComponent<{}> = ({}) =>
+
+export const Lobby = (props:{navigation:any,route:any}) =>
 {
-    
-        const route = useRoute<RouteProp<RouteParams>>();
+        
+        let id = props.route.params?.id as string;
+        let playerName = props.route.params?.playerName as string; 
+
+        useEffect(()=>{
+            // componentDidMount
+            console.log('Lobby did mount',id)
+            // Instancier la BDD.
+            return () => {
+              // componentWillUnmount
+              console.log('Lobby will unmount.')
+              // Reset playerName éventuellement.
+            };
+          },[]);
+
+        const validGameId = () => {
+            // Appel BDD
+            // Fetch noms de Game
+            // Vérification si ça matche
+            // Return true/false
+            // False --> setPopUpModal avec une fenêtre modale pour dire "cet ID n'existe pas etc"
+            return true
+        }
+
+        const onSubmit = () => {
+            if(validGameId()){
+                // Ecriture en BDD
+                // Navigation écran Lobby.
+            }
+        }
+        
+        
+        
         return(
             <View style={styles.container}>
                 
@@ -14,9 +47,13 @@ export const Lobby: React.FunctionComponent<{}> = ({}) =>
                     <Text style={{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%'}}>
                         Lobby
                     </Text>
-                    <Text style={{fontSize:Dimensions.get('window').height/20, fontWeight:'200',marginBottom:'5%'}}>
-                        Game ID : 
+                    <Text style={{fontSize:Dimensions.get('window').height/25, fontWeight:'200',marginBottom:'5%'}}>
+                        Game ID : {id}
                     </Text>
+                    <Text style={{fontSize:Dimensions.get('window').height/25, fontWeight:'200',marginBottom:'5%'}}>
+                        playerName : {playerName}
+                    </Text>
+                    
                 </View>               
                 
             </View>
