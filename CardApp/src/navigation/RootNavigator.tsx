@@ -9,7 +9,10 @@ export type RouteParams = {
     Create :undefined;
     Join :undefined;
     Game :undefined; 
-    Lobby :{id:string};
+    Lobby : {
+        id : string,
+        playerName : string,
+    };
     CreatePartieLocal:undefined;
     PartieLocal : {
         playerList : string[] 

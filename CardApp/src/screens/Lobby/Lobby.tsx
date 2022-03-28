@@ -4,8 +4,11 @@ import {useRoute, useNavigation, RouteProp, } from "@react-navigation/native"
 import {RouteParams} from "~/navigation/RootNavigator"
 import { NavigationStackProp } from "react-navigation-stack";
 
-
-export const Lobby = (props:{navigation:any,route:any}) =>
+interface LobbyProps {
+    navigation:any,
+    route:any
+}
+export const Lobby = (props:LobbyProps) =>
 {
         
         let id = props.route.params?.id as string;
@@ -22,21 +25,7 @@ export const Lobby = (props:{navigation:any,route:any}) =>
             };
           },[]);
 
-        const validGameId = () => {
-            // Appel BDD
-            // Fetch noms de Game
-            // Vérification si ça matche
-            // Return true/false
-            // False --> setPopUpModal avec une fenêtre modale pour dire "cet ID n'existe pas etc"
-            return true
-        }
 
-        const onSubmit = () => {
-            if(validGameId()){
-                // Ecriture en BDD
-                // Navigation écran Lobby.
-            }
-        }
         
         
         
