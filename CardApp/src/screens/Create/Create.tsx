@@ -18,7 +18,7 @@ export const Create  = (props:{navigation:any,route:any}) =>
     const [playerName,setPlayerName] = useState<string>('')
     const [gameId,setGameId] = useState<string>('default');
     
-    var database = firebase.default.database();
+    let database = firebase.default.database();
     
     useEffect(()=>{
         // componentDidMount

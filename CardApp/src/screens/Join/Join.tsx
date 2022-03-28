@@ -21,6 +21,8 @@ export const Join  = (props:JoinProps) =>
         const  [invalidGameId,setInvalidGameId] = useState<boolean>(false);
         const [invalidPlayerName, setInvalidPlayerName] = useState<boolean>(false);
 
+        
+
         var database = firebase.default.database();
 
         const validGameId = async (id : string) => {
@@ -32,7 +34,7 @@ export const Join  = (props:JoinProps) =>
             } 
             // On vérifie s'il y a une correspondance en valeur entre id et les champs games de la BDD.    
             var data = await database.ref('games').orderByKey().equalTo(id).once('value')
-
+            
             if(data.val()==null){
                 console.log('Game ID is not valid.');
                 return false;
@@ -50,7 +52,8 @@ export const Join  = (props:JoinProps) =>
             if(isValid){
                 // Ecriture en BDD
                 // Navigation écran Lobby. 
-                database.ref('players/'+gameId+'/'+playerName).set({
+
+                database.ref('players/'+gameId+'/'+playerName).update({
                     role : 'guest'
                 })
 
