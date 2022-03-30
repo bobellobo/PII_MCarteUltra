@@ -37,23 +37,23 @@ export const Create  = (props:{navigation:any,route:any}) =>
 
         Keyboard.dismiss();
                
-        var id = createGameID();
-        createGameDB(id);
+        let _id = createGameID();
+        createGameDB(_id);
         props.navigation.navigate("Lobby",{
-          id : id,
+          id : _id,
           playerName : playerName,
         })
         setPlayerName('');
       }
 
-      const createGameDB = (id:string) => {
+      const createGameDB = async (id:string) => {
           // Checker la s'il n'y a pas déjà une partie avec le même ID dans la BDD. while()do{}
           // Instancier une nouvelle table dans la BDD.
-          database.ref('games/'+id).set({
+          await database.ref('games/'+id).set({
             host : playerName,
             status : 'lobby'
           })
-          database.ref('players/'+id+'/'+playerName).set({
+          await database.ref('players/'+id+'/'+playerName).set({
             role : 'host'
           })
           // Games --> id --> états relatifs à la partie

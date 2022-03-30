@@ -1,5 +1,5 @@
 import React,{Component,useState,useEffect} from "react";
-import {StyleSheet,View,Text,Dimensions, DrawerLayoutAndroidBase} from "react-native"
+import {StyleSheet,View,Text,Dimensions,ScrollView} from "react-native"
 import {firebase} from "~/firebase/config"
 
 interface LobbyProps {
@@ -9,63 +9,94 @@ interface LobbyProps {
 export const Lobby = (props:LobbyProps) =>
 {
         
-        let id = props.route.params?.id as string; // gameId
+        let gameId = props.route.params?.id as string; // gameId
         let playerName = props.route.params?.playerName as string; // pseudo
         const [playerRole,setPlayerRole] = useState<string>('');
-        const [playersList,setPlayersList] = useState<object>({});
+        const [playersList,setPlayersList] = useState<Array<any>>([]);
+        
+
         
         let database = firebase.default.database();
 
         useEffect(()=>{
-            // componentDidMount
-            console.clear();
-            console.log('Lobby did mount, Game ID : ',id)
 
-            // Fetch liste players
+            console.log(playersList) // Pour "forcer" l'update de playersList
+        },[playersList])
+        useEffect(()=>{
+
+            // componentDidMount
+            fetchPlayers();
             getPlayerRole()
-            setPlayersList(fetchPlayers());
 
             // Instancier la BDD.
             return () => {
               // componentWillUnmount
-              console.log('Lobby will unmount.')
-              // Reset playerName éventuellement.
             };
           },[]);
 
+         
+
           const getPlayerRole = async ()=>{
-              let data = await database.ref('players/'+id+'/'+playerName).once('value');
-              let role = data.child('role').val()
-              console.log('role : ', role)
+
+              let data = await database.ref('players/'+gameId+'/'+playerName).once('value');
+              let role =  data.child('role').val();              
               setPlayerRole(role);
           }
 
-          const fetchPlayers = async ()=> {
-              let data = await database.ref('players/').orderByKey().once('value');
-              let list = data.child(id).val()
-              console.log('liste joueurs : ',  list)
-              return list
+          const fetchPlayers = async () => {
+              let list : Array<any> = []
+              let data = await database.ref('players/' + gameId).orderByKey();
+              (await data.once('value')).forEach(
+                  (snapshot)=>{
+                      let pseudo = snapshot.key;
+                      let role = snapshot.child('role').val();
+                      console.log('Pseudo : ',pseudo,', role : ',role);
+                      list = [...list,[pseudo,role]]
+                  }
+              )
+              setPlayersList(list);
           }
-
-
-        
-        
-        
+          
+          const renderPlayersList = () =>
+          {
+              if(playersList.length!=0)
+              {
+                let you = playersList.indexOf([playerName,playerRole]);
+                return playersList.map((item,index)=>{ 
+                    return(
+                        <View key={index} style = {styles.player}>
+                            <Text>{item[0]} {(you==index) ? '(You)': ''} <span style={{fontStyle:'italic'}}>{item[1]}</span></Text>
+                        </View>
+                    )
+                })
+              }
+              else{
+                  return(
+                      <View>
+                          <Text>
+                              Waiting for players...
+                          </Text>
+                      </View>
+                  )
+              }
+          }
         return(
             <View style={styles.container}>
                 
-                <View>
+                <View style={{marginTop:Dimensions.get('screen').height/5}}>
                     <Text style={{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%'}}>
                         Lobby
                     </Text>
                     <Text style={{fontSize:Dimensions.get('window').height/25, fontWeight:'200',marginBottom:'5%'}}>
-                        Game ID : {id}
+                        Game ID : {gameId}
                     </Text>
                     <Text style={{fontSize:Dimensions.get('window').height/25, fontWeight:'200',marginBottom:'5%'}}>
                         playerName : {playerName}
                     </Text>
-                    
-                </View>               
+                </View>
+                <ScrollView>
+                 {renderPlayersList()}
+              </ScrollView>       
                 
             </View>
         )
@@ -78,5 +109,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         display: 'flex',
-      },
+    },
+    player : {
+        flexDirection:'row',
+        backgroundColor : "#FFF",
+        padding : 15,
+        borderRadius : 10,
+        alignItems : "center",
+        justifyContent : "space-between",
+        marginBottom : 20,
+        minWidth:Dimensions.get('screen').width/2
+    },
 })
