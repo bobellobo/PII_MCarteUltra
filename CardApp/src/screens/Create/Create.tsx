@@ -9,7 +9,7 @@ import { Join,Lobby } from "..";
 import {firebase} from "~/firebase/config"
 import rand from 'random-seed';
 import { NavigationStackProp } from "react-navigation-stack";
-
+import {colors} from "~/constants/colors"
 
 
 export const Create  = (props:{navigation:any,route:any}) =>
@@ -97,5 +97,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         display: 'flex',
+        backgroundColor:colors.backGroundColor
       },
 })

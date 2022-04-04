@@ -5,6 +5,7 @@ import Button from "~/components/Button";
 import TextInput from "~/components/TextInput"
 import {firebase} from "~/firebase/config"
 import {ModalPopUp} from "~/components/ModalPopUp"
+import {colors} from "~/constants/colors"
 
 interface JoinProps {
     navigation : any,
@@ -127,6 +128,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         display: 'flex',
+        backgroundColor: colors.backGroundColor
       },
       gotItButton : {
         margin : 10,
