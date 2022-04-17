@@ -27,20 +27,20 @@ export default class Button extends React.Component<TextInputProps,{}>{
 
 const styles = StyleSheet.create({
     textInput: {
-        paddingLeft: Dimensions.get('screen').width/15,
-        paddingRight: Dimensions.get('screen').width/15,
+        paddingLeft: Dimensions.get('window').width/15,
+        paddingRight: Dimensions.get('window').width/15,
         minWidth: '85%',
         maxWidth: '85%',
         marginVertical : '5%',
         color: "black",
         backgroundColor: '#ffffff',
-        borderRadius: Dimensions.get('screen').height,
-        height: Dimensions.get('screen').height/12,
+        borderRadius: Dimensions.get('window').height,
+        height: Dimensions.get('window').height/12,
         display: 'flex',
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        fontSize: Dimensions.get('screen').height/50,
+        fontSize: Dimensions.get('window').height/50,
         textAlign: 'center'
     },
 })

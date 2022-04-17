@@ -7,6 +7,7 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import {firebase} from "~/firebase/config"
 import Button from "~/components/Button"
+import {colors} from "~/constants/colors"
 
 interface HomeProps {}
 
@@ -32,16 +33,14 @@ export const Home : React.FunctionComponent<HomeProps> = ({}) => {
   return(
     
     <View style={styles.container}>
-      <View style = {{paddingVertical : Dimensions.get('screen').height/4, paddingHorizontal : 20, justifyContent:'center'}}>
-        <View style={{alignItems:"center", justifyContent:'center'}}> 
+        <View style={{alignItems:"center", justifyContent:'center',paddingVertical : Dimensions.get('screen').height/4, paddingHorizontal : 20,}}> 
           <Text style={[styles.title,{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%'}]}>MCarte Ultra</Text>
           <Button text="Nouvelle partie en local" onPress={()=>navigation.navigate("CreatePartieLocal")}/>
           <Button text="Créer une partie" onPress={()=>navigation.navigate("Create")}/>
           <Button text="Rejoindre" onPress={()=>navigation.navigate("Join")}/>
           <Button text="Paramètres" onPress={()=>{}}/>
           <Button text="Sign In Test" onPress={()=>signInTest()}/>
-        </View>
-      </View>   
+        </View> 
     </View>
   )
 }
@@ -51,6 +50,7 @@ const styles = StyleSheet.create({
   container : {
     flex : 1,
     alignContent:'center',
+    backgroundColor: colors.backGroundColor
   },
 
   title : {
@@ -61,18 +61,4 @@ const styles = StyleSheet.create({
   buttonText : {
     fontSize:16
   },
-
-  menuButton : {
-    backgroundColor : "#FFF",
-    height : 60,
-    minWidth:200,
-    marginVertical : 20,
-    justifyContent : 'center',
-    alignItems : 'center',
-    borderRadius : 60,
-    borderColor : "#C0C0C0",
-    borderWidth : 1,
-    marginHorizontal : 20,
-  }
-
 });

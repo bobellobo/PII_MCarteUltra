@@ -23,7 +23,6 @@ export const Join  = (props:JoinProps) =>
         const [invalidPlayerName, setInvalidPlayerName] = useState<boolean>(false);
 
         
-
         var database = firebase.default.database();
 
         const validGameId = async (id : string) => {
@@ -65,7 +64,8 @@ export const Join  = (props:JoinProps) =>
                 else{
                     props.navigation.navigate("Lobby",{
                         id : gameId,
-                        playerName : playerName
+                        playerName : playerName,
+                        role : 'guest'
                     })
                 }
             }
@@ -109,7 +109,7 @@ export const Join  = (props:JoinProps) =>
                 </ModalPopUp>
                 
                 <View>
-                    <Text style={{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%'}}>
+                    <Text style={{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%',textAlign:'center'}}>
                         Rejoindre une partie
                     </Text>
                 </View>

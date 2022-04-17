@@ -42,6 +42,7 @@ export const Create  = (props:{navigation:any,route:any}) =>
         props.navigation.navigate("Lobby",{
           id : _id,
           playerName : playerName,
+          role : 'host'
         })
         setPlayerName('');
       }
