@@ -11,8 +11,15 @@ import {colors} from "~/constants/colors"
 
 interface HomeProps {}
 
+let height = Dimensions.get('window').height;
+let width = Dimensions.get('window').width;
+
 export const Home : React.FunctionComponent<HomeProps> = ({}) => {
+
+
+
   const navigation = useNavigation<NativeStackNavigationProp<RouteParams>>();
+  
   const signInTest=()=>{
     firebase.default.auth()
     .signInAnonymously()
@@ -35,11 +42,11 @@ export const Home : React.FunctionComponent<HomeProps> = ({}) => {
     <View style={styles.container}>
         <View style={{alignItems:"center", justifyContent:'center',paddingVertical : Dimensions.get('screen').height/4, paddingHorizontal : 20,}}> 
           <Text style={[styles.title,{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%'}]}>MCarte Ultra</Text>
-          <Button text="Nouvelle partie en local" onPress={()=>navigation.navigate("CreatePartieLocal")}/>
-          <Button text="Créer une partie" onPress={()=>navigation.navigate("Create")}/>
-          <Button text="Rejoindre" onPress={()=>navigation.navigate("Join")}/>
-          <Button text="Paramètres" onPress={()=>{}}/>
-          <Button text="Sign In Test" onPress={()=>signInTest()}/>
+          <Button textStyle={styles.buttonText} text="Nouvelle partie en local" onPress={()=>navigation.navigate("CreatePartieLocal")}/>
+          <Button textStyle={styles.buttonText} text="Créer une partie" onPress={()=>navigation.navigate("Create")}/>
+          <Button textStyle={styles.buttonText} text="Rejoindre" onPress={()=>navigation.navigate("Join")}/>
+          {/* <Button text="Paramètres" onPress={()=>{}}/>
+          <Button text="Sign In Test" onPress={()=>signInTest()}/> */}
         </View> 
     </View>
   )
@@ -52,13 +59,11 @@ const styles = StyleSheet.create({
     alignContent:'center',
     backgroundColor: colors.backGroundColor
   },
-
   title : {
     fontSize:32,
     fontWeight:'500'
   },
-
   buttonText : {
-    fontSize:16
+    fontSize: height*0.03,
   },
 });

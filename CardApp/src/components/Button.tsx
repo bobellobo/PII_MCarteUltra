@@ -5,7 +5,8 @@ interface ButtonProps {
     text: string,
     onPress: Function
     disabled? : boolean, // Activé par défaut
-    buttonStyle? : object,
+    textStyle? : object,
+    buttonStyle? : object
 }
 
 
@@ -19,7 +20,7 @@ export default class Button extends React.Component<ButtonProps,{}>{
         style={[styles.button,this.props.buttonStyle]}
         onPress={this.isDisabled ? ()=>{} : ()=>this.props.onPress()}
         >
-            <Text>
+            <Text style={this.props.textStyle}>
                 {this.props.text}
             </Text>
         </TouchableOpacity>
