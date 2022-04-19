@@ -8,10 +8,15 @@ export type RouteParams = {
     Home:undefined;
     Create :undefined;
     Join :undefined;
-    Game :undefined; 
+    Game :{
+        gameId : string,
+        playerName : string,
+        playerRole : string,
+    }; 
     Lobby : {
         id : string,
         playerName : string,
+        role : string
     };
     CreatePartieLocal:undefined;
     PartieLocal : {
@@ -35,7 +40,12 @@ export const RootNavigator = () => {
             <Stack.Screen name="Join"component={Join}options={{ headerShown :false}}/>
             <Stack.Screen name="Lobby" component={Lobby}options={{headerShown :false }}/>
 
-            <Stack.Screen name="Game" component={Game} options={{headerShown :true}}/>
+            <Stack.Screen 
+            name="Game" 
+            component={Game} 
+            options={{headerShown :false}}
+            //initialParams={{ gameId : 'GHDTF', playerName : 'Jean',playerRole:'host' }}
+            />
 
             <Stack.Screen 
                 name="CreatePartieLocal"
@@ -53,3 +63,4 @@ export const RootNavigator = () => {
     </Stack.Navigator>
     );
 };
+

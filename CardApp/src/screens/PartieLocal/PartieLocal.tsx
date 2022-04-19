@@ -13,7 +13,8 @@ import { requireCard } from "~/ressources/imagesPaths"
 
 
 
-var deck : Deck;
+let deck : Deck;
+
 interface PartieLocalProps {
   navigation :any,
   route : any
@@ -22,11 +23,10 @@ interface PartieLocalProps {
 export const PartieLocal  = (props : PartieLocalProps) => {
 
    
-  
   const playersList = props.route.params?.playerList as string[];
   
   
-  ScreenOrientation.unlockAsync();
+  //ScreenOrientation.unlockAsync();
   //ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
 
   useEffect(()=>{
