@@ -91,7 +91,6 @@ export const PartieLocal  = (props : PartieLocalProps) => {
       // Game Over Modal Pop up
       setGameOverVisible(true);
     }
-    
   }
   
 // Fonction qui renvoie un render avec l'affichage des tours des joueurs.
@@ -190,8 +189,6 @@ export const PartieLocal  = (props : PartieLocalProps) => {
         <BackHomeButton/>
       </View>
 
-      
-      
       <View style={styles.board}>       
         <View style={styles.stack}>
             <TouchableOpacity  onPress={()=>drawCard()}
@@ -206,15 +203,9 @@ export const PartieLocal  = (props : PartieLocalProps) => {
             {!firstRound &&
               <View style={[styles.cardWrapper]}>{renderCardImage()}</View>
             }
-            
-            
+
         </View>
-        
       </View>
-      
-      
-      
-      
     </View>
     
   )

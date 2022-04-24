@@ -44,7 +44,7 @@ export const RootNavigator = () => {
             name="Game" 
             component={Game} 
             options={{headerShown :false}}
-            //initialParams={{ gameId : 'GHDTF', playerName : 'Jean',playerRole:'host' }}
+            //initialParams={{ gameId : 'GHDTF', playerName : 'T2',playerRole:'host' }}
             />
 
             <Stack.Screen 

@@ -29,8 +29,7 @@ export const Lobby = (props:LobbyProps) =>
         let database = firebase.default.database();
 
         useEffect(()=>{
-
-            if(playersList.length != 0) console.log(playersList) // Pour "forcer" l'update de playersList
+            if(playersList.length != 0) console.log(playersList)
         },[playersList,playerRole])
 
         useEffect(()=>{
@@ -49,8 +48,8 @@ export const Lobby = (props:LobbyProps) =>
             };
           },[]);
 
-          // Fetch la liste de joueur depuis firebase et remplit playersList
-          // Fetch once --> != playerAdded()   
+        // Fetch la liste de joueur depuis firebase et remplit playersList
+        // Fetch once --> != playerAdded()   
         const fetchPlayers = async () => {
             let list : Array<any> = []
             let data = await database.ref('players/' + gameId).orderByKey();
@@ -76,6 +75,7 @@ export const Lobby = (props:LobbyProps) =>
         setPlayersList(list)
     })}
 
+    // Update state if role is changed to host
     const changeRole = () => {
         database.ref('games/'+gameId).on('value',(snapshot)=>{
             let host = snapshot.child('host').val();
@@ -92,12 +92,12 @@ export const Lobby = (props:LobbyProps) =>
 
         console.log('Leaving the game..')
         console.log('Checking if player was host..')   
-        console.log('Résultat wasHost() : ',await wasHost())
+        console.log('Résultat wasHost() : ',await (await wasHost()).valueOf())
         // Check if that player was the last one to leave the game.
         console.log('Checking if player was the last one to leave the game...')
 
         if(await wasLastPlayer()){
-            console.log(playerName, 'was not the last player to leave the game.')
+            console.log(playerName, 'was the last player to leave the game.')
             database.ref('games/'+gameId).remove()
             .then(()=>{console.log('Game removed succesfully')})
             .catch((error)=>{console.log('Error : ', error)})
@@ -106,8 +106,7 @@ export const Lobby = (props:LobbyProps) =>
             .catch((error)=>{console.log('Error : ', error)})
         }
         else{
-            console.log(playerName, 'was not the last player.')
-            console.log('Checking if ',playerName,' was host...')
+            console.log(playerName, 'was not the last player. Checking if ',playerName,' was host...')
 
             if(await wasHost()){
                 console.log(playerName, 'was host, setting new host for the game.');
@@ -296,7 +295,6 @@ const styles = StyleSheet.create({
         backgroundColor : 'white',
         borderColor : 'black',
         borderWidth : 1,
-
     },
     modalText : {
         fontWeight : 'bold',

@@ -1,12 +1,13 @@
 import React, {Component} from 'react';
-import { StyleSheet, TouchableOpacity, Text, Dimensions } from 'react-native';
+import { StyleSheet, TouchableOpacity,View, Text, Dimensions } from 'react-native';
 
 interface ButtonProps {
     text: string,
     onPress: Function
     disabled? : boolean, // Activé par défaut
     textStyle? : object,
-    buttonStyle? : object
+    buttonStyle? : object,
+    children? : any
 }
 
 
@@ -23,6 +24,7 @@ export default class Button extends React.Component<ButtonProps,{}>{
             <Text style={this.props.textStyle}>
                 {this.props.text}
             </Text>
+            <View>{this.props.children}</View>
         </TouchableOpacity>
         )
     }
@@ -39,5 +41,6 @@ const styles = StyleSheet.create({
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+      flexDirection :'row'
     },
 })

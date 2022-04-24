@@ -1,10 +1,12 @@
 import React,{Component,useState,useEffect} from "react";
-import {StyleSheet,View,Text,Dimensions} from "react-native"
+import {StyleSheet,View,Text,Dimensions,Image,TouchableOpacity} from "react-native"
 import {colors} from "~/constants/colors";
 import {firebase} from "~/firebase/config"
 import * as ScreenOrientation from 'expo-screen-orientation'
 import Deck, { Card } from "~/ressources/cardGame"
 import { requireCard } from "~/ressources/imagesPaths"
+import Button from "~/components/Button";
+import { ModalPopUp } from "~/components/ModalPopUp";
 
 interface GameProps {
     navigation:any,
@@ -18,11 +20,16 @@ export const Game = (props:GameProps) =>
 {
     const gameId = props.route.params?.gameId;
     const playerName = props.route.params?.playerName; 
-    const [playersList,setPlayersList] = useState<Array<any>>([]); 
+    const [playersList,setPlayersList] = useState<Array<any>>([]); // Remettre à []
     let [playerRole,setPlayerRole] = useState<string>(props.route.params?.playerRole); 
-    const [message, setMessage] = useState<string>('Waiting for game to start..');
     let deck : Deck;
     let database = firebase.default.database();
+    const [infoVisible,setInfoVisible] = useState<boolean>(false)
+    const [leaveGameVisible,setLeaveGameVisible] = useState<boolean>(false)
+    const [currentTurn,setCurrentTurn] = useState<boolean>((playerRole=='host')?true:false);
+
+    const [lastCardPicked, updateLastCardPicked] = useState<Card>(); // Gestion état : cartes tirées
+    const [gameOverVisible, setGameOverVisible] = useState<boolean>(false); // Apparition pop-up de fin de jeu.
 
     useEffect(()=>{
         // componentDidMount
@@ -40,15 +47,25 @@ export const Game = (props:GameProps) =>
             while(!listenForSetUp())
             console.log('Game started.')
         }
-        getPlayerList()
-        setMessage('Game started')
+
+        // Events and database update listeners
+        getPlayerList();
+        setFirstTurn();
+        playerAdded();
+        changeRole();
+        listenForTurnToChange();
+
+        if(playersList.length!=0) console.log('players list : ',playersList)
         return () => {
             console.log('Game will unmount.')
+            setLeaveGameVisible(true);
         };
       },
       []);
 
+
       const setUp = async ()=>{
+
         // Création d'un nouveau deck de cartes
         deck = new Deck();
         // On mélange le deck.
@@ -62,6 +79,30 @@ export const Game = (props:GameProps) =>
         })
       }
 
+      // Set players/gameId/[player] : {currentTurn : true/false}
+      const setFirstTurn = async () => {
+        if(playerRole=='host'){
+            // Set currentTurn true
+            database.ref('players/'+gameId+'/'+playerName).update({currentTurn : true})
+            setCurrentTurn(true);
+        }
+        else{
+            // Set currentTurn false
+            database.ref('players/'+gameId+'/'+playerName).update({currentTurn : false} )
+            setCurrentTurn(false);
+        }
+      }
+
+      // Updating players turn
+      const listenForTurnToChange = async () => {
+        database.ref('players/'+gameId+'/'+playerName+'/currentTurn').on('value', (snapshot)=>{
+            let result = snapshot.val()
+            setCurrentTurn(result);
+        })
+      }
+
+
+
       // Return true if set up is achieved correctly on the host device, else false.
       const listenForSetUp = async () => {
           database.ref('games/'+gameId+'/status/').on('value',(snapshot)=>{
@@ -73,6 +114,7 @@ export const Game = (props:GameProps) =>
           })
       }
 
+      // Fetch player list from firebase db
       const getPlayerList = async () => {
         let list : Array<any> = []
         let data = await database.ref('players/' + gameId).orderByKey();
@@ -83,19 +125,256 @@ export const Game = (props:GameProps) =>
                 list = [...list,[pseudo,role]]
             }
         )
+        console.log('liste : ',list)
         setPlayersList(list);
     }
+
+    // Affichage dynamique des cartes.
+    const renderCardImage = () =>
+    {
+        let suit = lastCardPicked?.suit as string;
+        let value = lastCardPicked?.value as number;
+
+        //  requireCard() importée depuis imagePaths.tsx.
+        let image = requireCard(suit,value);
+        
+        return(
+            <Image 
+                source={image}
+                resizeMode='stretch'
+                style={styles.card}
+
+            />  
+        )
+    }
+
+    const pickCard = () => {
+
+        // GESTION DECK
+
+        // drawCard
+        // updateDeck in db and in app state for everyone
+        // update last card picked for everyone
+
+        // GESTION TOUR
+        
+        //  Récupérer index du joueur dans playersList
+        let index  = getIndex();
+        // Récupérer le pseudo du joueur d'après avec l'index n+1
+        let pseudo = playersList[(index+1)%(playersList.length)][0];
+
+        // Update turns
+        updateTurn(playerName, pseudo)
+        // Set turn false pour le joueur qui vient de tirer
+        // Set turn true pour le joueur n+1
+
+        
+
+
+    }
+
+    // Récupère l'index du joueur dans la liste.
+    const getIndex = () => {
+        let _index=-1;
+        let element = [playerName,playerRole]
+        playersList.forEach((value:any,index:number)=>{
+            if (value[0]==element[0]&&value[1]==element[1]) {
+                console.log('Match, index : ',index)
+                _index = index
+            }
+        })
+        return _index;
+    }
+
+    const updateTurn = async (currentPseudo : string, nextPseudo : string) => {
+        database.ref('players/'+gameId+'/'+currentPseudo).update({
+            currentTurn : false
+        })
+        database.ref('players/'+gameId+'/'+nextPseudo).update({
+            currentTurn : true
+        })
+    }
+
+    // Gère le cas où un joueur quitte la partie.
+    const leaveGame = async () =>{
+
+        console.log('Leaving the game..') 
+        console.log('Résultat wasHost() : ',await wasHost())
+        // Check if that player was the last one to leave the game.
+        console.log('Checking if player was the last one to leave the game...')
+
+        if(await wasLastPlayer()){
+            console.log(playerName, 'was not the last player to leave the game.')
+            database.ref('games/'+gameId).remove()
+            .then(()=>{console.log('Game removed succesfully')})
+            .catch((error)=>{console.log('Error : ', error)})
+            database.ref('players/'+gameId).remove()
+            .then(()=>{console.log('Players removed succesfully')})
+            .catch((error)=>{console.log('Error : ', error)})
+        }
+        else{
+            console.log(playerName, 'was not the last player.')
+            console.log('Checking if ',playerName,' was host...')
+
+            if(await wasHost()){
+                console.log(playerName, 'was host, setting new host for the game.');
+                // Look for another player pseudo/id
+                let newHostPseudo = playerName
+                let newPlayer=[];
+                let i =0;
+                do{
+                    newPlayer = playersList[i];
+                    newHostPseudo = newPlayer[0]
+                    i+=1;
+                }
+                while(newHostPseudo==playerName)
+                // Update Game Host
+                database.ref('games/'+gameId).update({
+                    host : newHostPseudo
+                })
+            }
+            else{
+                console.log(playerName, 'was not host.')
+            }
+            database.ref('players/'+gameId+'/'+playerName).remove()
+            .then(()=>{console.log('Player ',playerName,' removed succesfully')})
+            .catch((error)=>{console.log('Error : ', error)})
+        }   
+        setLeaveGameVisible(false);
+        props.navigation.navigate("Home");
+    }
+
+    const wasLastPlayer = async () => {
+        let id = gameId;
+        let data = await database.ref('players/'+id).once('value');
+        let numberOfPlayers = data.numChildren();
+        if(numberOfPlayers===1)
+        {return true}
+        else{return false}
+    }
+
+    // Check if the player role was 'host' or not.
+    const wasHost = async () => {
+    let data = await database.ref('players/'+gameId+'/'+playerName).once('value');
+    let role =  data.child('role').val();
+    console.log(data.val())
+    console.log('role :',role)
+    if(role=='host'){ return true}
+    else{ return false }
+    }
+
+    // "Listen" la BDD pour voir si un joueur s'ajoute et update le render / playerList
+    const playerAdded = () =>{
+        database.ref('players/'+gameId).on('value',(snapshot)=>{
+            let list : Array<any> = [];
+            snapshot.forEach((childSnapshot)=>{
+                let pseudo = childSnapshot.key;
+                let role = childSnapshot.child('role').val();
+                list = [...list,[pseudo,role]];
+            })
+            setPlayersList(list)
+        })}
+
+    // Update state if role is changed to host
+    const changeRole = () => {
+        database.ref('games/'+gameId).on('value',(snapshot)=>{
+            let host = snapshot.child('host').val();
+            if(host==playerName){
+                setPlayerRole('host');
+            }
+        })
+    }
+
+
+
+
     
     return(
             <View style={styles.container}>
-                <Text style={styles.title}>
-                    Game Screen <br /> <br /> 
-                    ID : {gameId} <br />
-                    Player Name : {playerName} <br />
-                    Role : {playerRole}
-                </Text>
-                <Text style={styles.title}>{message}</Text>
-                <Text>{playersList}</Text>
+
+                <ModalPopUp visible={infoVisible}>
+                    <TouchableOpacity onPress={()=>{setInfoVisible(false)}} style={{position:'absolute',top:width*0.02,right:width*0.02}}>
+                    <Image 
+                        source={require('~/ressources/icons/remove.png')}
+                        resizeMode='contain'
+                        style = {{
+                            width:40,
+                            height : 40,
+                            tintColor : 'red',
+                            opacity:0.5,             
+                        }}
+                    />
+                    </TouchableOpacity>
+                    <View>
+                        <Text style={styles.popUpText}>
+                            GAME ID : {gameId}
+                        </Text>
+                        <Text style={styles.popUpText}>
+                            Your role : {playerRole}
+                        </Text>
+                        <Button buttonStyle={styles.buttonStyle} text="QUITTER" onPress={()=>{setInfoVisible(false); setLeaveGameVisible(true)}}></Button>
+                    </View>
+                </ModalPopUp>
+
+                <ModalPopUp visible={leaveGameVisible}>
+                    <View>
+                        <Text style={styles.modalText}>
+                            QUITTER LA PARTIE ?
+                        </Text>
+                        <Button buttonStyle={styles.buttonStyle} text="Oui" onPress={leaveGame}></Button> 
+                        <Button buttonStyle={styles.buttonStyle} text="Non" onPress={()=>{setLeaveGameVisible(false)}}></Button>
+                    </View>
+                </ModalPopUp>
+
+                
+                <View style={styles.infoWrapper}>
+                    <TouchableOpacity onPress={()=>{setInfoVisible(true)}}>
+                    <Image 
+                        source={require('~/ressources/icons/info.png')}
+                        resizeMode='contain'
+                        style = {styles.infoButton}
+                    />
+                    </TouchableOpacity>
+                    
+                </View>
+
+                <View style={styles.playersTurnWrapper}>
+
+                    {(currentTurn)? <Text>Your turn ! {playersList} </Text>: null}
+
+                    <View style={styles.playerNameWRapper}>
+                        <Text style={styles.playerText}>
+                            AU TOUR DE : <br />
+                            NOE
+                        </Text>
+                    </View>
+
+                    <View style={styles.playerNameWRapper}>
+                        <Text style={styles.playerText}>
+                            BLABLA A TIRE :
+                        </Text>
+                    </View>
+
+                </View>
+                
+                <View style={styles.cardWrapper}>
+                    <View style={styles.stack}>
+                        <Image 
+                            source={requireCard("BackCovers",3)}
+                            resizeMode='stretch'
+                            style={styles.card}         
+                        /> 
+                    </View>
+
+                </View>
+
+                <Button text="PIOCHE" disabled={!currentTurn} buttonStyle={[styles.buttonStyle,(!currentTurn)?styles.opacityLow:{}]}textStyle={styles.buttonText} onPress={()=>pickCard()}>
+                    <Image
+                        source={requireCard("BackCovers",3)}
+                        style={styles.cardIcon}
+                    />
+                </Button>
+                
             </View>
         )
     
@@ -108,11 +387,117 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         display: 'flex',
         backgroundColor:colors.backGroundColor
-      },
-      title:{
+    },
+    title:{
         fontSize:height/22.5, 
         fontWeight:'bold',
         marginBottom:'5%',
         textAlign:'center'
     },
+    card :{
+        height:380/Dimensions.get('window').scale*2,
+        width:255/Dimensions.get('window').scale*2,
+    },
+    buttonText : {
+        fontSize : height*0.04
+    },
+    pickButton : {
+        padding : height*0.05,
+        marginBottom : height*0.04,
+    },
+    cardIcon : {
+        height:380/Dimensions.get('window').scale*0.3,
+        width:255/Dimensions.get('window').scale*0.3,
+        marginLeft : height*0.02,
+        borderWidth :1,
+        borderRadius : 2,
+        borderColor:'black',
+        transform : [{ rotate: '20deg' }]
+    },
+    stack : {
+        flexDirection:'row',
+        justifyContent:'center',
+        alignItems :'center',
+    },
+    cardWrapper : {
+        flex :3,
+        justifyContent :'center',
+        alignContent:'center',
+        height:'100%',
+        width:'100%'
+    },
+    playersTurnWrapper : {
+        flex :1,
+        justifyContent :'space-between',
+        alignContent:'center',
+        height : '100%',
+        display:'flex',
+        padding : '5%',
+        minHeight : height*0.3,
+        
+    },
+    playerNameWRapper :{
+        justifyContent:'center',
+        alignItems:'center',
+        flex : 1,
+        width : width*0.8,
+        minHeight : height*0.08,
+        backgroundColor:'white',
+        borderColor :'black',
+        borderWidth : 2,
+        borderRadius :height*0.06,
+        marginVertical:'2%',
+        padding:'5%'
+    },
+    playerText : {
+        textAlign :'center',
+        fontSize : height*0.03
+    },
+    infoWrapper : {
+        flex :1,
+        width : '100%',
+        maxHeight : height*0.07,
+        flexDirection :'row',
+        justifyContent :'flex-end',
+        alignItems :'center',
+    },
+    infoButton : {
+        width : width*0.1,
+        height : width*0.1,
+        margin :width*0.03
+
+    },
+    i : {
+        textAlign :'center',
+        fontWeight :'bold',
+        fontSize : height*0.03
+    },
+    popUpText : {
+        textAlign :'center',
+        fontSize : height*0.03,
+        fontWeight : 'bold',
+    },
+    buttonStyle : {
+        backgroundColor : 'white',
+        borderColor : 'black',
+        borderWidth : 1,
+    },
+    modalText : {
+        fontWeight : 'bold',
+        fontSize : height*0.02,
+        marginVertical : height*0.02,
+    },
+    opacityLow : {
+        opacity :0.8
+    }
 })
+
+
+// <Text style={styles.title}>
+//                     Game Screen <br /> <br /> 
+//                     ID : {gameId} <br />
+//                     Player Name : {playerName} <br />
+//                     Role : {playerRole}
+//                 </Text>
+//                 <Text style={styles.title}>{message}</Text>
+//                 <Text>{playersList}</Text>
