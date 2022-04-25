@@ -22,14 +22,18 @@ export const Game = (props:GameProps) =>
     const playerName = props.route.params?.playerName; 
     const [playersList,setPlayersList] = useState<Array<any>>([]); // Remettre à []
     let [playerRole,setPlayerRole] = useState<string>(props.route.params?.playerRole); 
-    let deck : Deck;
     let database = firebase.default.database();
     const [infoVisible,setInfoVisible] = useState<boolean>(false)
     const [leaveGameVisible,setLeaveGameVisible] = useState<boolean>(false)
-    const [currentTurn,setCurrentTurn] = useState<boolean>();//((playerRole=='host')?true:false);
 
-    const [lastCardPicked, updateLastCardPicked] = useState<Card>(); // Gestion état : cartes tirées
+
+    const [currentTurn,setCurrentTurn] = useState<boolean>();//((playerRole=='host')?true:false);
+    const [deck,setDeck]=useState<Deck>(new Deck());
+    const [lastCardPicked, updateLastCardPicked] = useState<Card>(new Card("BackCovers",3)); // Gestion état : cartes tirées
+    const [currentPlayer, setCurrentPlayer] = useState<string>(playersList[0]);
+    const [previous, setPreviousPlayer] = useState<string>(playersList[0]);
     const [gameOverVisible, setGameOverVisible] = useState<boolean>(false); // Apparition pop-up de fin de jeu.
+
 
     useEffect(()=>{
         // componentDidMount
@@ -54,6 +58,7 @@ export const Game = (props:GameProps) =>
         setFirstTurn();
         playerAdded();
         changeRole();
+        listenForDeckUpdate();
         listenForTurnToChange();
 
         if(playersList.length!=0) console.log('players list : ',playersList)
@@ -68,7 +73,8 @@ export const Game = (props:GameProps) =>
       const setUp = async ()=>{
 
         // Création d'un nouveau deck de cartes
-        deck = new Deck();
+        let deck = new Deck();
+        console.log('Type de Deck : ',typeof(deck))
         // On mélange le deck.
         deck.shuffle();
         console.log('Deck : ',deck)
@@ -78,6 +84,7 @@ export const Game = (props:GameProps) =>
         database.ref('games/'+gameId+'/').update({
             status : 'started'
         })
+        setDeck(deck);
       }
 
       // Set players/gameId/[player] : {currentTurn : true/false}
@@ -96,7 +103,7 @@ export const Game = (props:GameProps) =>
 
       // Updating players turn
       const listenForTurnToChange = async () => {
-        database.ref('players/'+gameId+'/'+playerName+'/currentTurn').on('value', (snapshot)=>{
+        await database.ref('players/'+gameId+'/'+playerName+'/currentTurn').on('value', (snapshot)=>{
             let result = snapshot.val()
             console.log((result)?'It is now your turn.':"It is not your turn yet/anymore.")
             setCurrentTurn(result);
@@ -104,10 +111,9 @@ export const Game = (props:GameProps) =>
       }
 
 
-
       // Return true if set up is achieved correctly on the host device, else false.
       const listenForSetUp = async () => {
-          database.ref('games/'+gameId+'/status/').on('value',(snapshot)=>{
+          await database.ref('games/'+gameId+'/status/').on('value',(snapshot)=>{
             let status = snapshot.val();
             if(status=='started'){
                 return true
@@ -115,6 +121,7 @@ export const Game = (props:GameProps) =>
             else return false
           })
       }
+
 
       // Fetch player list from firebase db
       const getPlayerList = async () => {
@@ -150,32 +157,47 @@ export const Game = (props:GameProps) =>
         )
     }
 
-    const pickCard = () => {
+    const handlePickCard = () => {
         // GESTION DECK
-
+        console.log('Picking a card.');
+        console.log('Deck : ', deck);
+        console.log('[PICK UP] Type de Deck : ',typeof(deck))
         // drawCard
+        let card = pickCard();
+        console.log('Card picked : ',card)
         // updateDeck in db and in app state for everyone
         // update last card picked for everyone
 
         // GESTION TOUR
-        
         //  Récupérer index du joueur dans playersList
         let index  = getIndex();
-        console.log('index du joueur ayant appuyé sur piocher : ',index)
         // Récupérer le pseudo du joueur d'après avec l'index n+1
         let pseudo = playersList[(index+1)%(playersList.length)][0];
-        console.log('pseudo du joueur suivant : ',pseudo)
         // Update turns
         updateTurn(playerName, pseudo)
-        // Set turn false pour le joueur qui vient de tirer
-        // Set turn true pour le joueur n+1
-
-        
-
 
     }
 
-    // Récupère l'index du joueur dans la liste.
+    const pickCard = ()=>{
+        console.log('Number of cards : ',deck.cards.length);
+        console.log('Carte : ',deck.cards[6])
+        const randomIndex = Math.floor(Math.random()*deck.cards.length); 
+        console.log('random : ',randomIndex) // Entier aléatoire entre 0 et le nombre de cartes dans le deck -1.
+        let card = deck.cards[randomIndex];
+        deck.cards.splice(randomIndex,1);
+        console.log('Carte tirée : ',card)
+        return card;       
+    }
+
+    const listenForDeckUpdate = async ()=> {
+        await database.ref('games/'+gameId+'/deck').on('value',(snapshot)=>{
+          console.log('Deck updated.');
+          let deck = snapshot.val() as Deck;
+          setDeck(deck);
+        })
+    }
+
+    // Récupère l'index du joueur dans la liste playersList du state.
     const getIndex = () => {
         let _index=-1;
         let element = [playerName,playerRole]
@@ -188,11 +210,14 @@ export const Game = (props:GameProps) =>
         return _index;
     }
 
+    // Update players turn.
     const updateTurn = async (currentPseudo : string, nextPseudo : string) => {
+        // Set turn false pour le joueur qui vient de tirer
         database.ref('players/'+gameId+'/'+currentPseudo).update({
             currentTurn : false
         }).then(()=>{console.log('Not ',currentPseudo,' turn anymore.')}
         ).catch((error)=>console.log('Erreur updating turns : ',error))
+        // Set turn true pour le joueur n+1
         database.ref('players/'+gameId+'/'+nextPseudo).update({
             currentTurn : true
         }).then(()=>{console.log('Now ',nextPseudo,"'s turn.")})
@@ -349,7 +374,6 @@ export const Game = (props:GameProps) =>
                     <View style={styles.playerNameWRapper}>
                         <Text style={styles.playerText}>
                             AU TOUR DE : 
-                            NOE
                         </Text>
                     </View>
 
@@ -363,16 +387,12 @@ export const Game = (props:GameProps) =>
                 
                 <View style={styles.cardWrapper}>
                     <View style={styles.stack}>
-                        <Image 
-                            source={requireCard("BackCovers",3)}
-                            resizeMode='stretch'
-                            style={styles.card}         
-                        /> 
+                        {renderCardImage()}
                     </View>
 
                 </View>
 
-                <Button text="PIOCHE" buttonStyle={[styles.buttonStyle,(!currentTurn)?styles.opacityLow:{}]}textStyle={styles.buttonText} onPress={(currentTurn)?()=>pickCard():()=>console.log('Not your turn ! ')}>
+                <Button text="PIOCHE" buttonStyle={[styles.buttonStyle,(!currentTurn)?styles.opacityLow:{}]}textStyle={styles.buttonText} onPress={(currentTurn)?()=>handlePickCard():()=>console.log('Not your turn ! ')}>
                     <Image
                         source={requireCard("BackCovers",3)}
                         style={styles.cardIcon}
