@@ -222,7 +222,7 @@ export const Lobby = (props:LobbyProps) =>
                         LOBBY
                     </Text>
                     <Text style={styles.gameIdTextCell}>
-                        Game ID <br />{gameId}
+                        Game ID : {gameId}
                     </Text>
                 </View>
                 <ScrollView style={styles.listWrapper}>

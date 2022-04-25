@@ -26,13 +26,14 @@ export const Game = (props:GameProps) =>
     let database = firebase.default.database();
     const [infoVisible,setInfoVisible] = useState<boolean>(false)
     const [leaveGameVisible,setLeaveGameVisible] = useState<boolean>(false)
-    const [currentTurn,setCurrentTurn] = useState<boolean>((playerRole=='host')?true:false);
+    const [currentTurn,setCurrentTurn] = useState<boolean>();//((playerRole=='host')?true:false);
 
     const [lastCardPicked, updateLastCardPicked] = useState<Card>(); // Gestion état : cartes tirées
     const [gameOverVisible, setGameOverVisible] = useState<boolean>(false); // Apparition pop-up de fin de jeu.
 
     useEffect(()=>{
         // componentDidMount
+
         console.log('Game did mount.')
         if(playerRole=='host'){
             console.log('Setting up deck card..')
@@ -97,6 +98,7 @@ export const Game = (props:GameProps) =>
       const listenForTurnToChange = async () => {
         database.ref('players/'+gameId+'/'+playerName+'/currentTurn').on('value', (snapshot)=>{
             let result = snapshot.val()
+            console.log((result)?'It is now your turn.':"It is not your turn yet/anymore.")
             setCurrentTurn(result);
         })
       }
@@ -149,7 +151,6 @@ export const Game = (props:GameProps) =>
     }
 
     const pickCard = () => {
-
         // GESTION DECK
 
         // drawCard
@@ -160,9 +161,10 @@ export const Game = (props:GameProps) =>
         
         //  Récupérer index du joueur dans playersList
         let index  = getIndex();
+        console.log('index du joueur ayant appuyé sur piocher : ',index)
         // Récupérer le pseudo du joueur d'après avec l'index n+1
         let pseudo = playersList[(index+1)%(playersList.length)][0];
-
+        console.log('pseudo du joueur suivant : ',pseudo)
         // Update turns
         updateTurn(playerName, pseudo)
         // Set turn false pour le joueur qui vient de tirer
@@ -189,10 +191,12 @@ export const Game = (props:GameProps) =>
     const updateTurn = async (currentPseudo : string, nextPseudo : string) => {
         database.ref('players/'+gameId+'/'+currentPseudo).update({
             currentTurn : false
-        })
+        }).then(()=>{console.log('Not ',currentPseudo,' turn anymore.')}
+        ).catch((error)=>console.log('Erreur updating turns : ',error))
         database.ref('players/'+gameId+'/'+nextPseudo).update({
             currentTurn : true
-        })
+        }).then(()=>{console.log('Now ',nextPseudo,"'s turn.")})
+        .catch((error)=>console.log('Erreur updating turns : ',error))
     }
 
     // Gère le cas où un joueur quitte la partie.
@@ -340,11 +344,11 @@ export const Game = (props:GameProps) =>
 
                 <View style={styles.playersTurnWrapper}>
 
-                    {(currentTurn)? <Text>Your turn ! {playersList} </Text>: null}
+                    {(currentTurn)? <Text style={{textAlign:'center',justifyContent:'center'}}> Your turn !  </Text>: null}
 
                     <View style={styles.playerNameWRapper}>
                         <Text style={styles.playerText}>
-                            AU TOUR DE : <br />
+                            AU TOUR DE : 
                             NOE
                         </Text>
                     </View>
@@ -368,7 +372,7 @@ export const Game = (props:GameProps) =>
 
                 </View>
 
-                <Button text="PIOCHE" disabled={!currentTurn} buttonStyle={[styles.buttonStyle,(!currentTurn)?styles.opacityLow:{}]}textStyle={styles.buttonText} onPress={()=>pickCard()}>
+                <Button text="PIOCHE" buttonStyle={[styles.buttonStyle,(!currentTurn)?styles.opacityLow:{}]}textStyle={styles.buttonText} onPress={(currentTurn)?()=>pickCard():()=>console.log('Not your turn ! ')}>
                     <Image
                         source={requireCard("BackCovers",3)}
                         style={styles.cardIcon}
@@ -493,11 +497,3 @@ const styles = StyleSheet.create({
 })
 
 
-// <Text style={styles.title}>
-//                     Game Screen <br /> <br /> 
-//                     ID : {gameId} <br />
-//                     Player Name : {playerName} <br />
-//                     Role : {playerRole}
-//                 </Text>
-//                 <Text style={styles.title}>{message}</Text>
-//                 <Text>{playersList}</Text>
