@@ -29,14 +29,26 @@ export const Game = (props:GameProps) =>
 
     const [currentTurn,setCurrentTurn] = useState<boolean>();//((playerRole=='host')?true:false);
     const [deck,setDeck]=useState<Deck>(new Deck());
-    const [lastCardPicked, updateLastCardPicked] = useState<Card>(new Card("BackCovers",3)); // Gestion état : cartes tirées
+    const [lastCardPicked, setLastCardPicked] = useState<Card>(new Card("BackCovers",3)); // Gestion état : cartes tirées
     const [currentPlayer, setCurrentPlayer] = useState<string>(playersList[0]);
-    const [previous, setPreviousPlayer] = useState<string>(playersList[0]);
+    const [previousPlayer, setPreviousPlayer] = useState<string>(playersList[0]);
     const [gameOverVisible, setGameOverVisible] = useState<boolean>(false); // Apparition pop-up de fin de jeu.
 
 
     useEffect(()=>{
+        console.log('\nPrevious player : ',previousPlayer,'  Current player : ',currentPlayer)
+    },[previousPlayer,currentPlayer])
+    useEffect(()=>{
         // componentDidMount
+
+        // Events and database update listeners
+        getPlayerList();
+        setFirstTurn();
+        playerAdded();
+        changeRole();
+        listenForTurnToChange();
+        listenForCardPickedUpdate();
+        listenForDeckUpdate();
 
         console.log('Game did mount.')
         if(playerRole=='host'){
@@ -53,13 +65,7 @@ export const Game = (props:GameProps) =>
             console.log('Game started.')
         }
 
-        // Events and database update listeners
-        getPlayerList();
-        setFirstTurn();
-        playerAdded();
-        changeRole();
-        listenForDeckUpdate();
-        listenForTurnToChange();
+
 
         if(playersList.length!=0) console.log('players list : ',playersList)
         return () => {
@@ -74,15 +80,22 @@ export const Game = (props:GameProps) =>
 
         // Création d'un nouveau deck de cartes
         let deck = new Deck();
-        console.log('Type de Deck : ',typeof(deck))
+
         // On mélange le deck.
         deck.shuffle();
         console.log('Deck : ',deck)
+
         await database.ref('games/'+gameId+'/').set({
-            deck
+            deck,
+            lastCardPicked : ["BackCovers",3]
         })
+
         database.ref('games/'+gameId+'/').update({
             status : 'started'
+        })
+
+        database.ref('games/'+gameId).update({
+            turns : ['Previous player slot', 'Current player slot']
         })
         setDeck(deck);
       }
@@ -107,6 +120,18 @@ export const Game = (props:GameProps) =>
             let result = snapshot.val()
             console.log((result)?'It is now your turn.':"It is not your turn yet/anymore.")
             setCurrentTurn(result);
+        })
+        await database.ref('games/'+gameId+'/turns').on('value', (snapshot)=>{
+            let turns = snapshot.val() as string[];
+            if(turns!=undefined){
+                setPreviousPlayer(turns[0])
+                setCurrentPlayer(turns[1])
+                console.log('Result turns : ',turns)
+            }
+            else{
+                console.log('UNDEFINED')
+            }
+            
         })
       }
 
@@ -135,6 +160,8 @@ export const Game = (props:GameProps) =>
             }
         )
         console.log('liste : ',list)
+        setCurrentPlayer(list[0][0])
+        setPreviousPlayer(list[1][0])
         setPlayersList(list);
     }
 
@@ -157,16 +184,20 @@ export const Game = (props:GameProps) =>
         )
     }
 
+    // Gathers all the actions needed when the player picks a card
     const handlePickCard = () => {
         // GESTION DECK
-        console.log('Picking a card.');
-        console.log('Deck : ', deck);
-        console.log('[PICK UP] Type de Deck : ',typeof(deck))
+        console.log('\nPicking a card.');
+        console.log('Deck : ', deck,' nombre de cartes : ',deck.cards.length);
         // drawCard
         let card = pickCard();
         console.log('Card picked : ',card)
+        console.log('Deck : ', deck,' nombre de cartes : ',deck.cards.length);
+        
         // updateDeck in db and in app state for everyone
         // update last card picked for everyone
+        setLastCardPicked(card)
+        updateDB(card)
 
         // GESTION TOUR
         //  Récupérer index du joueur dans playersList
@@ -178,22 +209,38 @@ export const Game = (props:GameProps) =>
 
     }
 
+    // Select a random card in the deck.
     const pickCard = ()=>{
-        console.log('Number of cards : ',deck.cards.length);
-        console.log('Carte : ',deck.cards[6])
-        const randomIndex = Math.floor(Math.random()*deck.cards.length); 
-        console.log('random : ',randomIndex) // Entier aléatoire entre 0 et le nombre de cartes dans le deck -1.
+        const randomIndex = Math.floor(Math.random()*deck.cards.length); // Entier aléatoire entre 0 et le nombre de cartes dans le deck -1.
         let card = deck.cards[randomIndex];
         deck.cards.splice(randomIndex,1);
-        console.log('Carte tirée : ',card)
         return card;       
     }
 
+    // Updating deck and lastCardPicked values after picking a card.
+    const updateDB = async (card : Card) => {
+        await database.ref('games/'+gameId).update({
+            deck : deck,
+            lastCardPicked : [card.suit,card.value]
+        })
+    }
+
+    // Event listener to udpate state deck
     const listenForDeckUpdate = async ()=> {
         await database.ref('games/'+gameId+'/deck').on('value',(snapshot)=>{
           console.log('Deck updated.');
           let deck = snapshot.val() as Deck;
           setDeck(deck);
+        })
+    }
+
+    // Event listener to udpate state lastCardPicked
+    const listenForCardPickedUpdate = async ()=> {
+        await database.ref('games/'+gameId+'/lastCardPicked').on('value',(snapshot)=>{
+          console.log('Last card picked updated.');
+          console.log('DATA : ',snapshot.val())
+          let card = snapshot.val() as string[];
+          setLastCardPicked(new Card(card[0],card[1]));
         })
     }
 
@@ -203,7 +250,6 @@ export const Game = (props:GameProps) =>
         let element = [playerName,playerRole]
         playersList.forEach((value:any,index:number)=>{
             if (value[0]==element[0]&&value[1]==element[1]) {
-                console.log('Match, index : ',index)
                 _index = index
             }
         })
@@ -212,6 +258,7 @@ export const Game = (props:GameProps) =>
 
     // Update players turn.
     const updateTurn = async (currentPseudo : string, nextPseudo : string) => {
+
         // Set turn false pour le joueur qui vient de tirer
         database.ref('players/'+gameId+'/'+currentPseudo).update({
             currentTurn : false
@@ -221,6 +268,13 @@ export const Game = (props:GameProps) =>
         database.ref('players/'+gameId+'/'+nextPseudo).update({
             currentTurn : true
         }).then(()=>{console.log('Now ',nextPseudo,"'s turn.")})
+        .catch((error)=>console.log('Erreur updating turns : ',error))
+
+        // Set un objet turn dans games/id/turn pour pouvoir le récupérer dans listenForTurnToChange()
+        // Nécessaire pour faciliter le rendu dynamique des tours en haut de l'écran.
+        database.ref('games/'+gameId).update({
+            turns : [currentPseudo,nextPseudo]
+        }).then(()=>{console.log('Updated turns')})
         .catch((error)=>console.log('Erreur updating turns : ',error))
     }
 
@@ -373,13 +427,13 @@ export const Game = (props:GameProps) =>
 
                     <View style={styles.playerNameWRapper}>
                         <Text style={styles.playerText}>
-                            AU TOUR DE : 
+                            AU TOUR DE : {currentPlayer}
                         </Text>
                     </View>
 
                     <View style={styles.playerNameWRapper}>
                         <Text style={styles.playerText}>
-                            BLABLA A TIRE :
+                            {previousPlayer} A TIRE :
                         </Text>
                     </View>
 
