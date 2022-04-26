@@ -18,32 +18,49 @@ let width = Dimensions.get('window').width;
 
 export const Game = (props:GameProps) =>
 {
-    const gameId = props.route.params?.gameId;
-    const playerName = props.route.params?.playerName; 
-    const [playersList,setPlayersList] = useState<Array<any>>([]); // Remettre à []
+    // STATE ET VARIABLES
+    
+    // On récupère le role initial, le pseudo et l'identifiant de partie depuis les props du navigator.
     let [playerRole,setPlayerRole] = useState<string>(props.route.params?.playerRole); 
-    let database = firebase.default.database();
-    const [infoVisible,setInfoVisible] = useState<boolean>(false)
-    const [leaveGameVisible,setLeaveGameVisible] = useState<boolean>(false)
+    const gameId = props.route.params?.gameId;
+    const playerName = props.route.params?.playerName;
 
+    // Liste des joueurs et nom de l'hôte pour l'affichage du tout premier tour.
+    // Le choix a été fait de faire piocher l'hôte de la partie en premier.
+    const [playersList,setPlayersList] = useState<Array<any>>([]);
+    const [host,setHost] = useState<string>()
 
-    const [currentTurn,setCurrentTurn] = useState<boolean>();//((playerRole=='host')?true:false);
-    const [deck,setDeck]=useState<Deck>(new Deck());
-    const [lastCardPicked, setLastCardPicked] = useState<Card>(new Card("BackCovers",3)); // Gestion état : cartes tirées
+    // Booléen pour l'apparition des composants ModalPopUp (fin de partie, infos)
+    const [infoVisible,setInfoVisible] = useState<boolean>(false);
+    const [leaveGameVisible,setLeaveGameVisible] = useState<boolean>(false);
+    const [gameOverVisible, setGameOverVisible] = useState<boolean>(false); 
+
+    // Gestion du tour par tour.
     const [currentPlayer, setCurrentPlayer] = useState<string>(playersList[0]);
     const [previousPlayer, setPreviousPlayer] = useState<string>(playersList[0]);
-    const [gameOverVisible, setGameOverVisible] = useState<boolean>(false); // Apparition pop-up de fin de jeu.
+    const [currentTurn,setCurrentTurn] = useState<boolean>();
+
+    // Stockage de l'objet Deck et de la dernière carte tirée. Mis à jour à chaque nouvelle pioche.
+    const [deck,setDeck]=useState<Deck>(new Deck());
+    const [lastCardPicked, setLastCardPicked] = useState<Card>(new Card("BackCovers",3)); // Gestion état : cartes tirées
+
+    // Booléen mis à jour après chaque tirée. Plus de cartes dans le deck = gameOver
     const [isGameOver,setIsGameOver] = useState<boolean>(false)
-    const [host,setHost] = useState<string>()
+
+    // On instancie la BDD.
+    let database = firebase.default.database();
 
 
     useEffect(()=>{
         console.log('\nPrevious player : ',previousPlayer,'  Current player : ',currentPlayer)
     },[previousPlayer,currentPlayer])
+
+    // SET-UP ET GESTION DE componentDidMount ET componentWillUnmmount.
     useEffect(()=>{
         // componentDidMount
+        
+        // Initialisation de tous les events listeners.
 
-        // Events and database update listeners
         getPlayerList();
         setFirstTurn();
         playerAdded();
@@ -53,8 +70,11 @@ export const Game = (props:GameProps) =>
         listenForGameOver();
         listenForDeckUpdate();
 
+
         console.log('Game did mount.')
-        if(playerRole=='host'){
+
+        if(playerRole=='host') // Pour que le set-up ne soit fait qu'une fois.
+        {
             console.log('Setting up deck card..')
             setUp();
             console.log('Game started.');
@@ -64,31 +84,32 @@ export const Game = (props:GameProps) =>
             do{
                 console.log('Waiting for game to start...');
             }
-            while(!listenForSetUp())
+            while(!listenForSetUp()) // Les guests attendent que le set-up soit terminé.
             console.log('Game started.')
         }
 
-
-
         if(playersList.length!=0) console.log('players list : ',playersList)
+
         return () => {
             console.log('Game will unmount.')
-            database.ref().off();
+            database.ref().off(); // Inverse de l'initalisation des events listeners. 
         };
       },
       []);
 
+      
 
+      // FONCTIONS COMPONENTDIDMOUNT
+
+      // Mise en place de la partie et inialisation du deck etc..
       const setUp = async ()=>{
-
         // Création d'un nouveau deck de cartes
         let deck = new Deck();
 
         // On mélange le deck.
         deck.shuffle();
+
         console.log('Deck : ',deck)
-
-
 
         await database.ref('games/'+gameId+'/').set({
             deck,
@@ -102,10 +123,11 @@ export const Game = (props:GameProps) =>
         database.ref('games/'+gameId).update({
             turns : ['Previous player slot', 'Current player slot']
         })
+
+        // MAJ du state pour l'hôte.
         setDeck(deck);
       }
-
-      // Set players/gameId/[player] : {currentTurn : true/false}
+      // Au début on dit que c'est à l'hôte de jouer.
       const setFirstTurn = async () => {
         if(playerRole=='host'){
             // Set currentTurn true
@@ -118,42 +140,7 @@ export const Game = (props:GameProps) =>
             setCurrentTurn(false);
         }
       }
-
-      // Updating players turn
-      const listenForTurnToChange = async () => {
-        await database.ref('players/'+gameId+'/'+playerName+'/currentTurn').on('value', (snapshot)=>{
-            let result = snapshot.val()
-            console.log((result)?'It is now your turn.':"It is not your turn yet/anymore.")
-            setCurrentTurn(result);
-        })
-        await database.ref('games/'+gameId+'/turns').on('value', (snapshot)=>{
-            let turns = snapshot.val() as string[];
-            if(turns!=undefined){
-                setPreviousPlayer(turns[0])
-                setCurrentPlayer(turns[1])
-                console.log('Result turns : ',turns)
-            }
-            else{
-                console.log('UNDEFINED')
-            }
-            
-        })
-      }
-
-
-      // Return true if set up is achieved correctly on the host device, else false.
-      const listenForSetUp = async () => {
-          await database.ref('games/'+gameId+'/status/').on('value',(snapshot)=>{
-            let status = snapshot.val();
-            if(status=='started'){
-                return true
-            }
-            else return false
-          })
-      }
-
-
-      // Fetch player list from firebase db
+      // Fetch player list depuis firebase db
       const getPlayerList = async () => {
         let list : Array<any> = []
         let data = await database.ref('players/' + gameId).orderByKey();
@@ -171,47 +158,132 @@ export const Game = (props:GameProps) =>
         setPlayersList(list);
     }
 
-    // Affichage dynamique des cartes.
-    const renderCardImage = () =>
-    {
-        if(!isGameOver){
-            let suit = lastCardPicked?.suit as string;
-            let value = lastCardPicked?.value as number;
 
-            //  requireCard() importée depuis imagePaths.tsx.
-            let image = requireCard(suit,value);
-            return(
-                <Image 
-                    source={image}
-                    resizeMode='stretch'
-                    style={styles.card}
 
-                />  
-            )
+    // LISTENERS
+
+    // Dès que le tour est modifié en BDD on l'update dans le state.
+    const listenForTurnToChange = async () => {
+    await database.ref('players/'+gameId+'/'+playerName+'/currentTurn').on('value', (snapshot)=>{
+        let result = snapshot.val()
+        console.log((result)?'It is now your turn.':"It is not your turn yet/anymore.")
+        setCurrentTurn(result);
+    })
+    await database.ref('games/'+gameId+'/turns').on('value', (snapshot)=>{
+        let turns = snapshot.val() as string[];
+        if(turns!=undefined){
+            setPreviousPlayer(turns[0])
+            setCurrentPlayer(turns[1])
+            console.log('Result turns : ',turns)
         }
         else{
-            let image = requireCard('BackCovers',3);
-            return(
-                <Image 
-                    source={image}
-                    resizeMode='stretch'
-                    style={styles.card}
-
-                />  
-            )
+            console.log('UNDEFINED')
         }
+        
+    })
     }
+    // Return true if set up is achieved correctly on the host device, else false.
+    const listenForSetUp = async () => {
+        await database.ref('games/'+gameId+'/status/').on('value',(snapshot)=>{
+        let status = snapshot.val();
+        if(status=='started'){
+            return true
+        }
+        else return false
+        })
+    }
+    // Dès qu'un autre appareil modifie le deck en BDD on met à jour le state sur chacun des autres.
+    const listenForDeckUpdate = async ()=> {
+        await database.ref('games/'+gameId+'/deck').on('value',(snapshot)=>{
+          console.log('Deck updated.');
+          let deck = snapshot.val() as Deck;
+          setDeck(deck);
+        })
+    }
+    // Idem pour la dernière carte tirée
+    const listenForCardPickedUpdate = async ()=> {      
+        await database.ref('games/'+gameId+'/lastCardPicked').on('value',(snapshot)=>{
+            console.log('Last card picked updated.');
+            console.log('Card : ',snapshot.val())
+            if(snapshot.val()!=null){
+                let card = snapshot.val() as string[];
+                setLastCardPicked(new Card(card[0],card[1]));
+            }
+            })       
+    }
+    // "Listen" la BDD pour voir si un joueur s'ajoute et update le render / playerList
+    const playerAdded = () =>{
+        database.ref('players/'+gameId).on('value',(snapshot)=>{
+            let list : Array<any> = [];
+            snapshot.forEach((childSnapshot)=>{
+                let pseudo = childSnapshot.key;
+                let role = childSnapshot.child('role').val();
+                list = [...list,[pseudo,role]];
+            })
+            setPlayersList(list)
+    })
+    }
+    // Update state if role is changed to host
+    const changeRole = () => {
+        database.ref('games/'+gameId).on('value',(snapshot)=>{
+            let host = snapshot.child('host').val();
+            if(host==playerName){
+                setPlayerRole('host');
+            }
+        })
+    }
+
+
+
+
+
+    // UPDATE DB METHODS
+
+    //Dès qu'une carte est piochée on update la database pour l'affichage de la carte en question pour tout le monde.
+    const updateDB = async (card : Card) => {
+        await database.ref('games/'+gameId).update({
+            deck : deck,
+            lastCardPicked : [card.suit,card.value]
+        })
+    }
+    // Met à jour le tour en BDD
+    const updateTurn = async (currentPseudo : string, nextPseudo : string) => {
+
+        // Set turn false pour le joueur qui vient de tirer
+        database.ref('players/'+gameId+'/'+currentPseudo).update({
+            currentTurn : false
+        }).then(()=>{console.log('Not ',currentPseudo,' turn anymore.')}
+        ).catch((error)=>console.log('Erreur updating turns : ',error))
+        // Set turn true pour le joueur n+1
+        database.ref('players/'+gameId+'/'+nextPseudo).update({
+            currentTurn : true
+        }).then(()=>{console.log('Now ',nextPseudo,"'s turn.")})
+        .catch((error)=>console.log('Erreur updating turns : ',error))
+
+
+        // Set un objet turn dans games/id/turn pour pouvoir le récupérer dans listenForTurnToChange()
+        // Nécessaire pour faciliter le rendu dynamique des tours en haut de l'écran.
+        database.ref('games/'+gameId).update({
+            turns : [currentPseudo,nextPseudo]
+        }).then(()=>{console.log('Updated turns')})
+        .catch((error)=>console.log('Erreur updating turns : ',error))
+    }
+
+
+
+
+    // PIOCHE CARTE
 
     // Gathers all the actions needed when the player picks a card
     const handlePickCard = () => {
+
         // GESTION DECK       
-        
         console.log('\nPicking a card.');
         console.log('Deck : ', deck,' nombre de cartes : ',deck.cards.length);
-        // drawCard
         let card = pickCard() as Card;
         console.log('Card picked : ',card)
         console.log('Deck : ', deck,' nombre de cartes : ',deck.cards.length);
+
         if(deck.cards.length==0){
             handleGameOver()
         }
@@ -230,8 +302,7 @@ export const Game = (props:GameProps) =>
             updateTurn(playerName, pseudo)
         }
     }
-
-    // Select a random card in the deck.
+    // Pioche une carte au hasard dans le deck.
     const pickCard = ()=>{
 
         // Make game over popup appear
@@ -246,36 +317,6 @@ export const Game = (props:GameProps) =>
         
        
     }
-
-    // Updating deck and lastCardPicked values after picking a card.
-    const updateDB = async (card : Card) => {
-        await database.ref('games/'+gameId).update({
-            deck : deck,
-            lastCardPicked : [card.suit,card.value]
-        })
-    }
-
-    // Event listener to udpate state deck
-    const listenForDeckUpdate = async ()=> {
-        await database.ref('games/'+gameId+'/deck').on('value',(snapshot)=>{
-          console.log('Deck updated.');
-          let deck = snapshot.val() as Deck;
-          setDeck(deck);
-        })
-    }
-
-    // Event listener to udpate state lastCardPicked
-    const listenForCardPickedUpdate = async ()=> {      
-        await database.ref('games/'+gameId+'/lastCardPicked').on('value',(snapshot)=>{
-            console.log('Last card picked updated.');
-            console.log('Card : ',snapshot.val())
-            if(snapshot.val()!=null){
-                let card = snapshot.val() as string[];
-                setLastCardPicked(new Card(card[0],card[1]));
-            }
-            })       
-    }
-
     // Récupère l'index du joueur dans la liste playersList du state.
     const getIndex = () => {
         let _index=-1;
@@ -288,27 +329,11 @@ export const Game = (props:GameProps) =>
         return _index;
     }
 
-    // Update players turn.
-    const updateTurn = async (currentPseudo : string, nextPseudo : string) => {
 
-        // Set turn false pour le joueur qui vient de tirer
-        database.ref('players/'+gameId+'/'+currentPseudo).update({
-            currentTurn : false
-        }).then(()=>{console.log('Not ',currentPseudo,' turn anymore.')}
-        ).catch((error)=>console.log('Erreur updating turns : ',error))
-        // Set turn true pour le joueur n+1
-        database.ref('players/'+gameId+'/'+nextPseudo).update({
-            currentTurn : true
-        }).then(()=>{console.log('Now ',nextPseudo,"'s turn.")})
-        .catch((error)=>console.log('Erreur updating turns : ',error))
 
-        // Set un objet turn dans games/id/turn pour pouvoir le récupérer dans listenForTurnToChange()
-        // Nécessaire pour faciliter le rendu dynamique des tours en haut de l'écran.
-        database.ref('games/'+gameId).update({
-            turns : [currentPseudo,nextPseudo]
-        }).then(()=>{console.log('Updated turns')})
-        .catch((error)=>console.log('Erreur updating turns : ',error))
-    }
+
+
+    // QUITTER LA PARTIE
 
     // Gère le cas où un joueur quitte la partie.
     const leaveGame = async () =>{
@@ -317,6 +342,15 @@ export const Game = (props:GameProps) =>
         console.log('Résultat wasHost() : ',await wasHost())
         // Check if that player was the last one to leave the game.
         console.log('Checking if player was the last one to leave the game...')
+        
+        // Si le joueur quitte alors que c'était à son tour de jouer, on change le tour sans piocher de carte.
+        if(currentTurn){
+            let index  = getIndex();
+            // Récupérer le pseudo du joueur d'après avec l'index n+1
+            let pseudo = playersList[(index+1)%(playersList.length)][0];
+            // Update turns
+            updateTurn(playerName, pseudo)
+        }
 
         if(await wasLastPlayer()){
             console.log(playerName, 'was not the last player to leave the game.')
@@ -359,15 +393,13 @@ export const Game = (props:GameProps) =>
         setLeaveGameVisible(false);
         props.navigation.navigate("Home");
     }
-
-
-
+    // Si le joueur pioche la dernière carte la partie est finie et on met à jour la BDD.
     const handleGameOver = () => {
         database.ref('games/'+gameId).set({status : 'over'});
         setGameOverVisible(true)
         setIsGameOver(true);
     }
-
+    // Déclenché si un autre joueur pioche la dernière carte.
     const listenForGameOver = () => {
         database.ref('games/'+gameId+'/status').on('value',(snapshot)=>{
             if(snapshot.val()=='over'){
@@ -376,7 +408,7 @@ export const Game = (props:GameProps) =>
             }
         })
     }
-
+    // Détermine si le joueur était le dernier connecté à la partie.
     const wasLastPlayer = async () => {
         let id = gameId;
         let data = await database.ref('players/'+id).once('value');
@@ -385,8 +417,7 @@ export const Game = (props:GameProps) =>
         {return true}
         else{return false}
     }
-
-    // Check if the player role was 'host' or not.
+    // Détermine si le joueur était l'hôte pour réattribuer le rôle.
     const wasHost = async () => {
     let data = await database.ref('players/'+gameId+'/'+playerName).once('value');
     let role =  data.child('role').val();
@@ -396,29 +427,11 @@ export const Game = (props:GameProps) =>
     else{ return false }
     }
 
-    // "Listen" la BDD pour voir si un joueur s'ajoute et update le render / playerList
-    const playerAdded = () =>{
-        database.ref('players/'+gameId).on('value',(snapshot)=>{
-            let list : Array<any> = [];
-            snapshot.forEach((childSnapshot)=>{
-                let pseudo = childSnapshot.key;
-                let role = childSnapshot.child('role').val();
-                list = [...list,[pseudo,role]];
-            })
-            setPlayersList(list)
-    })
-    }
 
-    // Update state if role is changed to host
-    const changeRole = () => {
-        database.ref('games/'+gameId).on('value',(snapshot)=>{
-            let host = snapshot.child('host').val();
-            if(host==playerName){
-                setPlayerRole('host');
-            }
-        })
-    }
 
+    // RENDER
+
+    // Affichage dynamique du tour par tour
     const renderPlayersTurn =  () => {      
         if(!isGameOver){
             if(deck!=null){
@@ -427,7 +440,7 @@ export const Game = (props:GameProps) =>
                         <View style={styles.playersTurnWrapper}>
         
         
-                            <View style={styles.playerNameWRapper}>
+                            <View style={styles.firstRoundPlayerNameWrapper}>
                                 <Text style={styles.playerText}>
                                     C'est à {host?.toUpperCase()} de tirer
                                 </Text>
@@ -459,6 +472,36 @@ export const Game = (props:GameProps) =>
             }
         }
 
+    }
+    // Affichage dynamique des cartes.
+    const renderCardImage = () =>
+    {
+        if(!isGameOver){
+            let suit = lastCardPicked?.suit as string;
+            let value = lastCardPicked?.value as number;
+
+            //  requireCard() importée depuis imagePaths.tsx.
+            let image = requireCard(suit,value);
+            return(
+                <Image 
+                    source={image}
+                    resizeMode='stretch'
+                    style={styles.card}
+
+                />  
+            )
+        }
+        else{
+            let image = requireCard('BackCovers',3);
+            return(
+                <Image 
+                    source={image}
+                    resizeMode='stretch'
+                    style={styles.card}
+
+                />  
+            )
+        }
     }
 
 
@@ -493,7 +536,7 @@ export const Game = (props:GameProps) =>
                             GAME ID : {gameId}
                         </Text>
                         <Text style={styles.popUpText}>
-                            Your role : {playerRole}
+                            ROLE : {playerRole}
                         </Text>
                         <Button buttonStyle={styles.buttonStyle} text="QUITTER" onPress={()=>{setInfoVisible(false); setLeaveGameVisible(true)}}></Button>
                     </View>
@@ -504,8 +547,8 @@ export const Game = (props:GameProps) =>
                         <Text style={styles.modalText}>
                             QUITTER LA PARTIE ?
                         </Text>
-                        <Button buttonStyle={styles.buttonStyle} text="Oui" onPress={leaveGame}></Button> 
-                        <Button buttonStyle={styles.buttonStyle} text="Non" onPress={()=>{setLeaveGameVisible(false)}}></Button>
+                        <Button buttonStyle={styles.buttonStyle} text="OUI" onPress={leaveGame}></Button> 
+                        <Button buttonStyle={styles.buttonStyle} text="NON" onPress={()=>{setLeaveGameVisible(false)}}></Button>
                     </View>
                 </ModalPopUp>
 
@@ -541,6 +584,7 @@ export const Game = (props:GameProps) =>
         )
     
 }
+
 
 const styles = StyleSheet.create({
     container : {
@@ -605,6 +649,19 @@ const styles = StyleSheet.create({
         flex : 1,
         width : width*0.8,
         minHeight : height*0.08,
+        backgroundColor:'white',
+        borderColor :'black',
+        borderWidth : 2,
+        borderRadius :height*0.06,
+        marginVertical:'2%',
+        padding:'5%'
+    },
+    firstRoundPlayerNameWrapper : {
+        justifyContent:'center',
+        alignItems:'center',
+        flex : 1,
+        width : width*0.8,
+        height : height*0.08,
         backgroundColor:'white',
         borderColor :'black',
         borderWidth : 2,

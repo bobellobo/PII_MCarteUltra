@@ -23,7 +23,6 @@ export const Create  = (props:{navigation:any,route:any}) =>
     useEffect(()=>{
         // componentDidMount
         console.log('Create did mount') 
-        // Instancier la BDD.
         return () => {
           // componentWillUnmount
           console.log('Create will unmount.')
@@ -32,13 +31,17 @@ export const Create  = (props:{navigation:any,route:any}) =>
       },[]);
 
 
-
+      // Gère l'appui sur le bouton 'CREER'
       const onSubmit = () => {
 
+        // Rétracte le clavier
         Keyboard.dismiss();
-               
+
+        // Création d'un identifiant pour la partie.      
         let _id = createGameID();
+        // Ecriture dans la BDD
         createGameDB(_id);
+        // On amène l'utilisateur à l'écran Lobby
         props.navigation.navigate("Lobby",{
           id : _id,
           playerName : playerName,
@@ -48,7 +51,8 @@ export const Create  = (props:{navigation:any,route:any}) =>
       }
 
       const createGameDB = async (id:string) => {
-          // Checker la s'il n'y a pas déjà une partie avec le même ID dans la BDD. while()do{}
+
+          // Checker s'il n'y a pas déjà une partie avec le même ID dans la BDD. while()do{}
           // Instancier une nouvelle table dans la BDD.
           await database.ref('games/'+id).set({
             host : playerName,
@@ -62,6 +66,7 @@ export const Create  = (props:{navigation:any,route:any}) =>
           // Decks --> node id --> Deck
       }
 
+      // Création d'un identifiant de 5 lettres random.
       const createGameID = () => {
         let id = '';
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -74,21 +79,17 @@ export const Create  = (props:{navigation:any,route:any}) =>
         return id;       
       }
 
-    
-
-        return(
-            <View style={styles.container}>
-                
-                <View>
-                    <Text style={{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%'}}>
-                        Créer une partie
-                    </Text>
-                </View>
-                <TextInput placeholder="Votre pseudo" onChangeText={(text : string )=>setPlayerName(text)} value={playerName}> </TextInput>
-                <Button text="Créer" onPress={()=>onSubmit()}/>
-                
-            </View>
-        )
+      return(
+          <View style={styles.container}>
+              <View>
+                  <Text style={{fontSize:Dimensions.get('window').height/25, fontWeight:'bold',marginBottom:'5%'}}>
+                      CREER UNE PARTIE
+                  </Text>
+              </View>
+              <TextInput placeholder="Votre pseudo" onChangeText={(text : string )=>setPlayerName(text)} value={playerName}> </TextInput>
+              <Button text="CREER" buttonStyle={styles.buttonStyle} onPress={()=>onSubmit()}/>
+          </View>
+      )
     
 }
 
@@ -100,4 +101,9 @@ const styles = StyleSheet.create({
         display: 'flex',
         backgroundColor:colors.backGroundColor
       },
+      buttonStyle : {
+        backgroundColor : 'white',
+        borderColor : 'black',
+        borderWidth : 1,
+    },
 })

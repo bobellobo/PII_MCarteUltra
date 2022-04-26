@@ -101,7 +101,7 @@ export const Join  = (props:JoinProps) =>
 
                 <ModalPopUp visible={invalidPlayerName}>
                     <View>
-                    <Text>Pseudo non valide (au moins 1 caractère)</Text>
+                        <Text>Pseudo non valide (au moins 1 caractère)</Text>
                     </View>
                     <TouchableOpacity style={styles.gotItButton} onPress={()=>{setInvalidPlayerName(false);}}>
                     <Text>OK</Text>
@@ -110,12 +110,12 @@ export const Join  = (props:JoinProps) =>
                 
                 <View>
                     <Text style={{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%',textAlign:'center'}}>
-                        Rejoindre une partie
+                        REJOINDRE
                     </Text>
                 </View>
                 <TextInput placeholder="Game ID" onChangeText={(text:string)=>{setGameId(text.toUpperCase())}} value={gameId}> </TextInput>
                 <TextInput placeholder="Votre pseudo" onChangeText={(text:string)=>{setPlayerName(text)}} value={playerName}> </TextInput>
-                <Button text="Rejoindre" onPress={()=>onSubmit()}/>
+                <Button text="REJOINDRE" buttonStyle={styles.buttonStyle}onPress={()=>onSubmit()}/>
                 
             </View>
         )
@@ -139,4 +139,9 @@ const styles = StyleSheet.create({
         borderRadius:5,
         padding : 10
       },
+      buttonStyle : {
+        backgroundColor : 'white',
+        borderColor : 'black',
+        borderWidth : 1,
+    },
 })

@@ -41,10 +41,10 @@ export const Home : React.FunctionComponent<HomeProps> = ({}) => {
     
     <View style={styles.container}>
         <View style={{alignItems:"center", justifyContent:'center',paddingVertical : Dimensions.get('screen').height/4, paddingHorizontal : 20,}}> 
-          <Text style={[styles.title,{fontSize:Dimensions.get('window').height/20, fontWeight:'bold',marginBottom:'5%'}]}>MCarte Ultra</Text>
-          <Button textStyle={styles.buttonText} text="Nouvelle partie en local" onPress={()=>navigation.navigate("CreatePartieLocal")}/>
-          <Button textStyle={styles.buttonText} text="Créer une partie" onPress={()=>navigation.navigate("Create")}/>
-          <Button textStyle={styles.buttonText} text="Rejoindre" onPress={()=>navigation.navigate("Join")}/>
+          <Text style={[styles.title,{fontSize:Dimensions.get('window').height/25, fontWeight:'bold',marginBottom:'5%'}]}>MCARTE ULTRA</Text>
+          <Button textStyle={styles.buttonText} text="MODE LOCAL" onPress={()=>navigation.navigate("CreatePartieLocal")}/>
+          <Button textStyle={styles.buttonText} text="CREER" onPress={()=>navigation.navigate("Create")}/>
+          <Button textStyle={styles.buttonText} text="REJOINDRE" onPress={()=>navigation.navigate("Join")}/>
           {/* <Button text="Paramètres" onPress={()=>{}}/>
           <Button text="Sign In Test" onPress={()=>signInTest()}/> */}
         </View> 

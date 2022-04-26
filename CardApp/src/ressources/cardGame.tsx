@@ -1,7 +1,7 @@
 import React from 'react';
 
-const SUITS = ["Spades", "Clubs", "Hearts", "Diamonds"]
 
+const SUITS = ["Spades", "Clubs", "Hearts", "Diamonds"]
 const VALUES = [1,2,3,4,5,6,7,8,9,10,11,12,13]
 
 

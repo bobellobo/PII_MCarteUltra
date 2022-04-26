@@ -12,19 +12,19 @@ interface LobbyProps {
     route:any
 }
 
+// Pour ajuster la taille des élément en fonction de la taille de l'écran.
 let height = Dimensions.get('window').height;
 let width = Dimensions.get('window').width;
 
 export const Lobby = (props:LobbyProps) =>
 {
-        
-        let gameId = props.route.params?.id as string; // gameId
-        let playerName = props.route.params?.playerName as string; // pseudo
-        const [playerRole,setPlayerRole] = useState<string>(props.route.params?.role as string);
-        const [playersList,setPlayersList] = useState<Array<any>>([]);
-        const [leaveGameVisible, setLeaveGame] = useState<boolean>(false);
-        
+        // STATE ET VARIABLES
+        let gameId = props.route.params?.id as string; // Identifiant de la partie passé en props via la navigation
+        let playerName = props.route.params?.playerName as string; // Pseudo du joueur passé en props via la navigation
 
+        const [playerRole,setPlayerRole] = useState<string>(props.route.params?.role as string); // Host ou guest
+        const [playersList,setPlayersList] = useState<Array<any>>([]); // Liste des joueurs [pseudo, role]
+        const [leaveGameVisible, setLeaveGame] = useState<boolean>(false); // Booléen d'activation du composant ModalPopUp
         
         let database = firebase.default.database();
 
@@ -35,16 +35,16 @@ export const Lobby = (props:LobbyProps) =>
         useEffect(()=>{
 
             // componentDidMount
+            // On fait appel au fonction qui 'écoutent' la BDD.
             playerAdded();
             fetchPlayers();
             changeRole();
             hostDidLaunch();
 
-
-            // Instancier la BDD.
             return () => {
               // componentWillUnmount
               console.log('Lobby screen will unmount..')
+              database.ref().off();
             };
           },[]);
 
@@ -60,7 +60,7 @@ export const Lobby = (props:LobbyProps) =>
                     list = [...list,[pseudo,role]]
                 }
             )
-            setPlayersList(list);
+            setPlayersList(list); // Modification du state.
         }
 
     // "Listen" la BDD pour voir si un joueur s'ajoute et update le render / playerList
@@ -75,7 +75,7 @@ export const Lobby = (props:LobbyProps) =>
         setPlayersList(list)
     })}
 
-    // Update state if role is changed to host
+    // Mise à jour du state si le rôle du joueur est modifié. (si l'hôte quitte la partie par exemple)
     const changeRole = () => {
         database.ref('games/'+gameId).on('value',(snapshot)=>{
             let host = snapshot.child('host').val();
@@ -85,15 +85,11 @@ export const Lobby = (props:LobbyProps) =>
         })
     }
 
-
-
     // Gère le cas où un joueur quitte la partie.
     const leaveGame = async () =>{
 
         console.log('Leaving the game..')
-        console.log('Checking if player was host..')   
-        console.log('Résultat wasHost() : ',await (await wasHost()).valueOf())
-        // Check if that player was the last one to leave the game.
+        // On vérifie si le joueur était le dernier connecté pour supprimer les données relatives à la partie dans la BDD après son départ.
         console.log('Checking if player was the last one to leave the game...')
 
         if(await wasLastPlayer()){
@@ -107,7 +103,9 @@ export const Lobby = (props:LobbyProps) =>
         }
         else{
             console.log(playerName, 'was not the last player. Checking if ',playerName,' was host...')
-
+            // On vérifie s'il était hôte pour réattribuer le rôle d'hôte.
+            console.log('Checking if player was host..')   
+            console.log('Résultat wasHost() : ',await (await wasHost()).valueOf())
             if(await wasHost()){
                 console.log(playerName, 'was host, setting new host for the game.');
                 // Look for another player pseudo/id
@@ -120,7 +118,7 @@ export const Lobby = (props:LobbyProps) =>
                     i+=1;
                 }
                 while(newHostPseudo==playerName)
-                // Update Game Host
+                // Mise à jour hôte.
                 database.ref('games/'+gameId).update({
                     host : newHostPseudo
                 })
@@ -132,12 +130,11 @@ export const Lobby = (props:LobbyProps) =>
             .then(()=>{console.log('Player ',playerName,' removed succesfully')})
             .catch((error)=>{console.log('Error : ', error)})
         }   
-        
-
         setLeaveGame(false);
         props.navigation.navigate("Home");
     }
 
+    // Détermine si le joueur est le dernier connecté à la partie.
     const wasLastPlayer = async () => {
         let id = gameId;
         let data = await database.ref('players/'+id).once('value');
@@ -147,7 +144,7 @@ export const Lobby = (props:LobbyProps) =>
         else{return false}
     }
 
-    // Check if the player role was 'host' or not.
+    // Vérifie si le joueur est l'hôte de la partie.
     const wasHost = async () => {
     let data = await database.ref('players/'+gameId+'/'+playerName).once('value');
     let role =  data.child('role').val();
@@ -155,14 +152,18 @@ export const Lobby = (props:LobbyProps) =>
     else{ return false }
     }
     
-    // Only available for the host. Sets game status to 'launching' in firebase db.
+    // Si le rôle du joueur est hôte, il a accès à un bouton qui lance la partie.
+    // On modifie le champ 'status' de la BDD sur 'launching' pour que l'information soit récupérée par les autres utilisateurs et naviguer vers l'écran GAME.
     const launchGame = () => {
-        database.ref('games/'+gameId+'/').update({
-            status : 'launching'
-        })
+        if(playersList.length!=1){
+            database.ref('games/'+gameId+'/').update({
+                status : 'launching'
+            })
+        } 
     }
 
-    // Listening for any change at firebaseDatabase/games/gameID/status and navigate to Game screen.
+
+    // Détecte un changement du statut de la partie au niveau firebaseDatabase/games/gameID/status et navigue vers l'écran d'accueil
     const hostDidLaunch = () => {
         database.ref('games/'+gameId).on('value',(snapshot)=>{
             let status = snapshot.child('status').val();
@@ -186,7 +187,7 @@ export const Lobby = (props:LobbyProps) =>
         return playersList.map((item,index)=>{ 
             return(
                 <View key={index} style = {styles.playerWrapper}>
-                    <Text style={styles.playerText}>{item[0]} {(item[0]==playerName) ? '(you)': ''} <Text style={{fontStyle:'italic'}}>{item[1]}</Text></Text>
+                    <Text style={styles.playerText}>{item[0]} {(item[0]==playerName) ? '(vous)': ''} <Text style={{fontStyle:'italic'}}>{item[1]}</Text></Text>
                 </View>
             )
         })
@@ -195,19 +196,17 @@ export const Lobby = (props:LobbyProps) =>
             return(
                 <View style={styles.waiting}> 
                     <Text style={{fontSize:height*0.04, textAlign:'justify',fontWeight:'600'}}>
-                        Waiting for players...
+                        En attente de joueurs...
                     </Text>
                 </View>
             )
         }
     }
 
-
-
         return(
-
             <View style={styles.container}>
-                
+
+                {/* Pop-up pour quitter la partie */}
                 <ModalPopUp visible={leaveGameVisible}>
                     <View>
                         <Text style={styles.modalText}>
@@ -217,6 +216,7 @@ export const Lobby = (props:LobbyProps) =>
                         <Button buttonStyle={styles.buttonStyle} text="Non" onPress={()=>{setLeaveGame(false)}}></Button>
                     </View>
                 </ModalPopUp>
+                
                 <View style={styles.topWrapper}>
                     <Text style={styles.title}>
                         LOBBY
@@ -229,14 +229,11 @@ export const Lobby = (props:LobbyProps) =>
                  {renderPlayersList()}
                 </ScrollView>
 
-                {playerRole=='host'? <Button text="LAUNCH" onPress={launchGame}/> : null}
+                {playerRole=='host'? <Button text="LANCER" buttonStyle={styles.buttonStyle} onPress={launchGame}/> : null}
                    
-                <Button text="QUITTER" onPress={()=>setLeaveGame(true)}/>
-                
-                
+                <Button text="QUITTER" buttonStyle={styles.buttonStyle} onPress={()=>setLeaveGame(true)}/>  
             </View>
-        )
-    
+        )    
 }
 
 const styles = StyleSheet.create({
