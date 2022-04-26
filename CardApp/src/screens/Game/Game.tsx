@@ -33,6 +33,8 @@ export const Game = (props:GameProps) =>
     const [currentPlayer, setCurrentPlayer] = useState<string>(playersList[0]);
     const [previousPlayer, setPreviousPlayer] = useState<string>(playersList[0]);
     const [gameOverVisible, setGameOverVisible] = useState<boolean>(false); // Apparition pop-up de fin de jeu.
+    const [isGameOver,setIsGameOver] = useState<boolean>(false)
+    const [host,setHost] = useState<string>()
 
 
     useEffect(()=>{
@@ -48,6 +50,7 @@ export const Game = (props:GameProps) =>
         changeRole();
         listenForTurnToChange();
         listenForCardPickedUpdate();
+        listenForGameOver();
         listenForDeckUpdate();
 
         console.log('Game did mount.')
@@ -70,7 +73,7 @@ export const Game = (props:GameProps) =>
         if(playersList.length!=0) console.log('players list : ',playersList)
         return () => {
             console.log('Game will unmount.')
-            setLeaveGameVisible(true);
+            database.ref().off();
         };
       },
       []);
@@ -84,6 +87,8 @@ export const Game = (props:GameProps) =>
         // On mélange le deck.
         deck.shuffle();
         console.log('Deck : ',deck)
+
+
 
         await database.ref('games/'+gameId+'/').set({
             deck,
@@ -159,7 +164,8 @@ export const Game = (props:GameProps) =>
                 list = [...list,[pseudo,role]]
             }
         )
-        console.log('liste : ',list)
+        console.log('Liste des joueurs : ',list)
+        setHost(list[0][0])
         setCurrentPlayer(list[0][0])
         setPreviousPlayer(list[1][0])
         setPlayersList(list);
@@ -168,53 +174,77 @@ export const Game = (props:GameProps) =>
     // Affichage dynamique des cartes.
     const renderCardImage = () =>
     {
-        let suit = lastCardPicked?.suit as string;
-        let value = lastCardPicked?.value as number;
+        if(!isGameOver){
+            let suit = lastCardPicked?.suit as string;
+            let value = lastCardPicked?.value as number;
 
-        //  requireCard() importée depuis imagePaths.tsx.
-        let image = requireCard(suit,value);
-        
-        return(
-            <Image 
-                source={image}
-                resizeMode='stretch'
-                style={styles.card}
+            //  requireCard() importée depuis imagePaths.tsx.
+            let image = requireCard(suit,value);
+            return(
+                <Image 
+                    source={image}
+                    resizeMode='stretch'
+                    style={styles.card}
 
-            />  
-        )
+                />  
+            )
+        }
+        else{
+            let image = requireCard('BackCovers',3);
+            return(
+                <Image 
+                    source={image}
+                    resizeMode='stretch'
+                    style={styles.card}
+
+                />  
+            )
+        }
     }
 
     // Gathers all the actions needed when the player picks a card
     const handlePickCard = () => {
-        // GESTION DECK
+        // GESTION DECK       
+        
         console.log('\nPicking a card.');
         console.log('Deck : ', deck,' nombre de cartes : ',deck.cards.length);
         // drawCard
-        let card = pickCard();
+        let card = pickCard() as Card;
         console.log('Card picked : ',card)
         console.log('Deck : ', deck,' nombre de cartes : ',deck.cards.length);
-        
-        // updateDeck in db and in app state for everyone
-        // update last card picked for everyone
-        setLastCardPicked(card)
-        updateDB(card)
+        if(deck.cards.length==0){
+            handleGameOver()
+        }
+        else{
+            // updateDeck in db and in app state for everyone
+            // update last card picked for everyone
+            setLastCardPicked(card)
+            updateDB(card)
 
-        // GESTION TOUR
-        //  Récupérer index du joueur dans playersList
-        let index  = getIndex();
-        // Récupérer le pseudo du joueur d'après avec l'index n+1
-        let pseudo = playersList[(index+1)%(playersList.length)][0];
-        // Update turns
-        updateTurn(playerName, pseudo)
-
+            // GESTION TOUR
+            //  Récupérer index du joueur dans playersList
+            let index  = getIndex();
+            // Récupérer le pseudo du joueur d'après avec l'index n+1
+            let pseudo = playersList[(index+1)%(playersList.length)][0];
+            // Update turns
+            updateTurn(playerName, pseudo)
+        }
     }
 
     // Select a random card in the deck.
     const pickCard = ()=>{
+
+        // Make game over popup appear
         const randomIndex = Math.floor(Math.random()*deck.cards.length); // Entier aléatoire entre 0 et le nombre de cartes dans le deck -1.
         let card = deck.cards[randomIndex];
         deck.cards.splice(randomIndex,1);
-        return card;       
+        if(deck==null){
+            console.log("You've picked the last card.");
+            handleGameOver()
+        }
+        return card;
+        
+       
     }
 
     // Updating deck and lastCardPicked values after picking a card.
@@ -235,13 +265,15 @@ export const Game = (props:GameProps) =>
     }
 
     // Event listener to udpate state lastCardPicked
-    const listenForCardPickedUpdate = async ()=> {
+    const listenForCardPickedUpdate = async ()=> {      
         await database.ref('games/'+gameId+'/lastCardPicked').on('value',(snapshot)=>{
-          console.log('Last card picked updated.');
-          console.log('DATA : ',snapshot.val())
-          let card = snapshot.val() as string[];
-          setLastCardPicked(new Card(card[0],card[1]));
-        })
+            console.log('Last card picked updated.');
+            console.log('Card : ',snapshot.val())
+            if(snapshot.val()!=null){
+                let card = snapshot.val() as string[];
+                setLastCardPicked(new Card(card[0],card[1]));
+            }
+            })       
     }
 
     // Récupère l'index du joueur dans la liste playersList du state.
@@ -315,6 +347,7 @@ export const Game = (props:GameProps) =>
                 database.ref('games/'+gameId).update({
                     host : newHostPseudo
                 })
+                setHost(newHostPseudo)
             }
             else{
                 console.log(playerName, 'was not host.')
@@ -325,6 +358,23 @@ export const Game = (props:GameProps) =>
         }   
         setLeaveGameVisible(false);
         props.navigation.navigate("Home");
+    }
+
+
+
+    const handleGameOver = () => {
+        database.ref('games/'+gameId).set({status : 'over'});
+        setGameOverVisible(true)
+        setIsGameOver(true);
+    }
+
+    const listenForGameOver = () => {
+        database.ref('games/'+gameId+'/status').on('value',(snapshot)=>{
+            if(snapshot.val()=='over'){
+                setIsGameOver(true)
+                setGameOverVisible(true)
+            }
+        })
     }
 
     const wasLastPlayer = async () => {
@@ -356,7 +406,8 @@ export const Game = (props:GameProps) =>
                 list = [...list,[pseudo,role]];
             })
             setPlayersList(list)
-        })}
+    })
+    }
 
     // Update state if role is changed to host
     const changeRole = () => {
@@ -368,12 +419,61 @@ export const Game = (props:GameProps) =>
         })
     }
 
+    const renderPlayersTurn =  () => {      
+        if(!isGameOver){
+            if(deck!=null){
+                if(deck.cards.length==52){
+                    return(
+                        <View style={styles.playersTurnWrapper}>
+        
+        
+                            <View style={styles.playerNameWRapper}>
+                                <Text style={styles.playerText}>
+                                    C'est à {host?.toUpperCase()} de tirer
+                                </Text>
+                            </View>
+        
+                        </View>
+                    )
+                }
+                else{
+                    return(
+                        <View style={styles.playersTurnWrapper}>
+        
+        
+                            <View style={[styles.playerNameWRapper,{maxHeight:height*0.2,width:width*0.8}]}>
+                                <Text style={styles.playerText}>
+                                    AU TOUR DE : {currentPlayer.toUpperCase()}
+                                </Text>
+                            </View>
+        
+                            <View style={styles.playerNameWRapper}>
+                                <Text style={styles.playerText}>
+                                    {previousPlayer.toUpperCase()} A TIRE :
+                                </Text>
+                            </View>
+        
+                        </View>
+                    )
+                }
+            }
+        }
+
+    }
+
 
 
 
     
     return(
             <View style={styles.container}>
+
+                <ModalPopUp visible={gameOverVisible}  >       
+                    <View style={{height : height*0.3, padding : '10%'}}>
+                        <Text style={styles.title}>Partie terminée !</Text>
+                        <Button buttonStyle={styles.buttonStyle} text="ACCUEIL" onPress={()=>{setGameOverVisible(false); props.navigation.navigate('Home')}}></Button>
+                    </View>
+                </ModalPopUp>
 
                 <ModalPopUp visible={infoVisible}>
                     <TouchableOpacity onPress={()=>{setInfoVisible(false)}} style={{position:'absolute',top:width*0.02,right:width*0.02}}>
@@ -388,7 +488,7 @@ export const Game = (props:GameProps) =>
                         }}
                     />
                     </TouchableOpacity>
-                    <View>
+                    <View style={{padding:'5%'}}>
                         <Text style={styles.popUpText}>
                             GAME ID : {gameId}
                         </Text>
@@ -421,23 +521,7 @@ export const Game = (props:GameProps) =>
                     
                 </View>
 
-                <View style={styles.playersTurnWrapper}>
-
-                    {(currentTurn)? <Text style={{textAlign:'center',justifyContent:'center'}}> Your turn !  </Text>: null}
-
-                    <View style={styles.playerNameWRapper}>
-                        <Text style={styles.playerText}>
-                            AU TOUR DE : {currentPlayer}
-                        </Text>
-                    </View>
-
-                    <View style={styles.playerNameWRapper}>
-                        <Text style={styles.playerText}>
-                            {previousPlayer} A TIRE :
-                        </Text>
-                    </View>
-
-                </View>
+                {renderPlayersTurn()}
                 
                 <View style={styles.cardWrapper}>
                     <View style={styles.stack}>
@@ -446,7 +530,7 @@ export const Game = (props:GameProps) =>
 
                 </View>
 
-                <Button text="PIOCHE" buttonStyle={[styles.buttonStyle,(!currentTurn)?styles.opacityLow:{}]}textStyle={styles.buttonText} onPress={(currentTurn)?()=>handlePickCard():()=>console.log('Not your turn ! ')}>
+                <Button text="PIOCHE" buttonStyle={[styles.buttonStyle,(!currentTurn)?styles.opacityLow:{}]}textStyle={styles.buttonText} onPress={((currentTurn)&&!isGameOver)?()=>handlePickCard():()=>console.log('Not your turn ! / Game over ')}>
                     <Image
                         source={requireCard("BackCovers",3)}
                         style={styles.cardIcon}
@@ -464,7 +548,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         display: 'flex',
-        backgroundColor:colors.backGroundColor
+        backgroundColor:colors.backGroundColor,
+        paddingVertical : '5%'
     },
     title:{
         fontSize:height/22.5, 
@@ -553,12 +638,13 @@ const styles = StyleSheet.create({
     popUpText : {
         textAlign :'center',
         fontSize : height*0.03,
-        fontWeight : 'bold',
+        marginVertical : '5%'
     },
     buttonStyle : {
         backgroundColor : 'white',
         borderColor : 'black',
         borderWidth : 1,
+        padding:'10%'
     },
     modalText : {
         fontWeight : 'bold',
