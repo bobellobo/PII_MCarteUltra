@@ -44,6 +44,7 @@ export const Lobby = (props:LobbyProps) =>
             return () => {
               // componentWillUnmount
               console.log('Lobby screen will unmount..')
+              leaveGame();
               database.ref().off();
             };
           },[]);

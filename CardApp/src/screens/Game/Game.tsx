@@ -1,5 +1,5 @@
 import React,{Component,useState,useEffect} from "react";
-import {StyleSheet,View,Text,Dimensions,Image,TouchableOpacity} from "react-native"
+import {StyleSheet,View,Text,Dimensions,Image,TouchableOpacity,Platform} from "react-native"
 import {colors} from "~/constants/colors";
 import {firebase} from "~/firebase/config"
 import * as ScreenOrientation from 'expo-screen-orientation'
@@ -13,17 +13,18 @@ interface GameProps {
     route:any
 }
 
-let height = Dimensions.get('window').height;
-let width = Dimensions.get('window').width;
+let height = Dimensions.get('screen').height;
+let width  = Dimensions.get('screen').width;
+
 
 export const Game = (props:GameProps) =>
 {
     // STATE ET VARIABLES
     
     // On récupère le role initial, le pseudo et l'identifiant de partie depuis les props du navigator.
-    let [playerRole,setPlayerRole] = useState<string>(props.route.params?.playerRole); 
-    const gameId = props.route.params?.gameId;
-    const playerName = props.route.params?.playerName;
+    let [playerRole,setPlayerRole] = useState<string>('host')//(props.route.params?.playerRole); 
+    const gameId = 'EFDRZ' //props.route.params?.gameId;
+    const playerName = 'Noé'//props.route.params?.playerName;
 
     // Liste des joueurs et nom de l'hôte pour l'affichage du tout premier tour.
     // Le choix a été fait de faire piocher l'hôte de la partie en premier.
@@ -71,7 +72,8 @@ export const Game = (props:GameProps) =>
         listenForDeckUpdate();
 
 
-        console.log('Game did mount.')
+        console.log('Game did mount.');
+        console.log('Height : ', height,' Width : ', width);
 
         if(playerRole=='host') // Pour que le set-up ne soit fait qu'une fois.
         {
@@ -97,7 +99,6 @@ export const Game = (props:GameProps) =>
       },
       []);
 
-      
 
       // FONCTIONS COMPONENTDIDMOUNT
 
@@ -602,14 +603,15 @@ const styles = StyleSheet.create({
         textAlign:'center'
     },
     card :{
-        height:380/Dimensions.get('window').scale*2,
-        width:255/Dimensions.get('window').scale*2,
+        height:380/(height*0.0012),
+        width:255/(height*0.0012),
+        marginVertical : height*0.1 
     },
     buttonText : {
-        fontSize : height*0.04
+        fontSize : width*0.08
     },
     pickButton : {
-        padding : height*0.05,
+        padding : height*0.08,
         marginBottom : height*0.04,
     },
     cardIcon : {
@@ -637,10 +639,9 @@ const styles = StyleSheet.create({
         flex :1,
         justifyContent :'space-between',
         alignContent:'center',
-        height : '100%',
         display:'flex',
         padding : '5%',
-        minHeight : height*0.3,
+        minHeight : height*0.1,
         
     },
     playerNameWRapper :{
@@ -648,7 +649,7 @@ const styles = StyleSheet.create({
         alignItems:'center',
         flex : 1,
         width : width*0.8,
-        minHeight : height*0.08,
+        minHeight : height*0.008,
         backgroundColor:'white',
         borderColor :'black',
         borderWidth : 2,
@@ -661,13 +662,13 @@ const styles = StyleSheet.create({
         alignItems:'center',
         flex : 1,
         width : width*0.8,
-        height : height*0.08,
+        height : height*0.008,
         backgroundColor:'white',
         borderColor :'black',
         borderWidth : 2,
         borderRadius :height*0.06,
         marginVertical:'2%',
-        padding:'5%'
+        //padding:'5%'
     },
     playerText : {
         textAlign :'center',
@@ -701,7 +702,8 @@ const styles = StyleSheet.create({
         backgroundColor : 'white',
         borderColor : 'black',
         borderWidth : 1,
-        padding:'10%'
+        padding:'5%',
+        minHeight : height*0.09
     },
     modalText : {
         fontWeight : 'bold',

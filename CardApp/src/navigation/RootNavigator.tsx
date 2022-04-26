@@ -28,7 +28,7 @@ const Stack = createNativeStackNavigator<RouteParams>();
 
 export const RootNavigator = () => {
     return (
-    <Stack.Navigator initialRouteName="Home">
+    <Stack.Navigator initialRouteName="Game" >
 
         <Stack.Group>
 
