@@ -1,5 +1,10 @@
 # PII_MCarteUltra
 
+Projet réalisé dans le cadre du Projet Informatique Individuel du S8 à l'ENSC.
+
+Réalisé par Titouan Guedon. 
+Ce projet a été tutoré par M. Pierre Bouny et encadré par Mme Edwige Clermont ainsi que M. Pierre-Alexandre Favier.
+
 Pour lancer le projet : 
 
   - dans un nouveau dossier, run : git clone https://github.com/bobellobo/PII_MCarteUltra.git
