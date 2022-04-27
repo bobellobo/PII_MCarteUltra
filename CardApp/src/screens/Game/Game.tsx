@@ -22,9 +22,9 @@ export const Game = (props:GameProps) =>
     // STATE ET VARIABLES
     
     // On récupère le role initial, le pseudo et l'identifiant de partie depuis les props du navigator.
-    let [playerRole,setPlayerRole] = useState<string>('host')//(props.route.params?.playerRole); 
-    const gameId = 'EFDRZ' //props.route.params?.gameId;
-    const playerName = 'Noé'//props.route.params?.playerName;
+    let [playerRole,setPlayerRole] = useState<string>(props.route.params?.playerRole); 
+    const gameId = props.route.params?.gameId;
+    const playerName = props.route.params?.playerName;
 
     // Liste des joueurs et nom de l'hôte pour l'affichage du tout premier tour.
     // Le choix a été fait de faire piocher l'hôte de la partie en premier.

@@ -32,29 +32,24 @@ export const RootNavigator = () => {
 
         <Stack.Group>
 
-            <Stack.Screen 
-            name="Home"component={Home} options={{headerShown :false }}/>
+            <Stack.Screen name="Home"component={Home} options={{headerShown :false }}/>
 
             <Stack.Screen name="Create" component={Create}options={{headerShown :false }}/>
 
             <Stack.Screen name="Join"component={Join}options={{ headerShown :false}}/>
-            <Stack.Screen name="Lobby" component={Lobby}options={{headerShown :false }}/>
+            <Stack.Screen name="Lobby" component={Lobby}options={{headerShown :false, }}/>
 
-            <Stack.Screen 
-            name="Game" 
-            component={Game} 
-            options={{headerShown :false}}
+            <Stack.Screen name="Game"  component={Game}  options={{headerShown :false,}}
             />
 
-            <Stack.Screen 
-                name="CreatePartieLocal"
-                component={CreatePartieLocal}
+            <Stack.Screen name="CreatePartieLocal"component={CreatePartieLocal}
                 options={{
                     animation:"slide_from_right",
                     title :'Nouvelle partie',
                     headerShown:false,
                 }}
             />
+
             <Stack.Screen name="PartieLocal"component={PartieLocal}options ={{headerShown:false}}/>
 
         </Stack.Group>

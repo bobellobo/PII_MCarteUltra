@@ -49,6 +49,10 @@ export const Join  = (props:JoinProps) =>
         const onSubmit = async () => {
             
             const isValid = await validGameId(gameId)
+            let status;
+            await database.ref('games/'+gameId+'/status').once('value').then((snapshot)=>{
+                status=snapshot.val();
+            })
             if(isValid){
                 // Ecriture en BDD
                 // Navigation écran Lobby. 
@@ -62,11 +66,22 @@ export const Join  = (props:JoinProps) =>
                     setInvalidPlayerName(true)                
                 }
                 else{
-                    props.navigation.navigate("Lobby",{
-                        id : gameId,
-                        playerName : playerName,
-                        role : 'guest'
-                    })
+                    if(status=='lobby'){
+                        props.navigation.navigate("Lobby",{
+                            id : gameId,
+                            playerName : playerName,
+                            role : 'guest'
+                        })
+                    }
+                    
+                    // Sera développé plus tard pour permettre à un joueur de rejoindre une partie en cours de route.
+                    // else{
+                    //     props.navigation.navigate("Game",{
+                    //         id : gameId,
+                    //         playerName : playerName,
+                    //         role : 'guest',
+                    //     })
+                    // }
                 }
             }
             else{

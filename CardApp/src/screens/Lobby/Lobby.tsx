@@ -44,8 +44,6 @@ export const Lobby = (props:LobbyProps) =>
             return () => {
               // componentWillUnmount
               console.log('Lobby screen will unmount..')
-              leaveGame();
-              database.ref().off();
             };
           },[]);
 
@@ -81,7 +79,9 @@ export const Lobby = (props:LobbyProps) =>
         database.ref('games/'+gameId).on('value',(snapshot)=>{
             let host = snapshot.child('host').val();
             if(host==playerName){
+                console.log('Your role has changed, ',host)
                 setPlayerRole('host');
+                database.ref('players/'+gameId+'/'+playerName).update({role:'host'})
             }
         })
     }
@@ -140,6 +140,8 @@ export const Lobby = (props:LobbyProps) =>
         let id = gameId;
         let data = await database.ref('players/'+id).once('value');
         let numberOfPlayers = data.numChildren();
+        console.log(data.val())
+        console.log('NOMBRE JOUEURS : ',numberOfPlayers)
         if(numberOfPlayers===1)
         {return true}
         else{return false}
@@ -228,6 +230,7 @@ export const Lobby = (props:LobbyProps) =>
                 </View>
                 <ScrollView style={styles.listWrapper}>
                  {renderPlayersList()}
+                 {(playersList.length==1)?<View><Text style={{fontSize:Dimensions.get('screen').width*0.05, textAlign:'center'}}>En attente d'autres joueurs</Text></View>:null}
                 </ScrollView>
 
                 {playerRole=='host'? <Button text="LANCER" buttonStyle={styles.buttonStyle} onPress={launchGame}/> : null}
@@ -249,7 +252,6 @@ const styles = StyleSheet.create({
         fontSize:Dimensions.get('window').height/17, 
         fontWeight:'bold',
         marginBottom:'5%',
-        fontFamily:'Sirukota'
     },
     playerWrapper : {
         flexDirection:'row',
