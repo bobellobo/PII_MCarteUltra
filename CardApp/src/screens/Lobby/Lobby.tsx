@@ -248,7 +248,8 @@ const styles = StyleSheet.create({
     title:{
         fontSize:Dimensions.get('window').height/17, 
         fontWeight:'bold',
-        marginBottom:'5%'
+        marginBottom:'5%',
+        fontFamily:'Sirukota'
     },
     playerWrapper : {
         flexDirection:'row',

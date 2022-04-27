@@ -34,20 +34,22 @@ export const Create  = (props:{navigation:any,route:any}) =>
       // Gère l'appui sur le bouton 'CREER'
       const onSubmit = () => {
 
-        // Rétracte le clavier
-        Keyboard.dismiss();
+        if(playerName!=''){
+          // Rétracte le clavier
+          Keyboard.dismiss();
 
-        // Création d'un identifiant pour la partie.      
-        let _id = createGameID();
-        // Ecriture dans la BDD
-        createGameDB(_id);
-        // On amène l'utilisateur à l'écran Lobby
-        props.navigation.navigate("Lobby",{
-          id : _id,
-          playerName : playerName,
-          role : 'host'
-        })
-        setPlayerName('');
+          // Création d'un identifiant pour la partie.      
+          let _id = createGameID();
+          // Ecriture dans la BDD
+          createGameDB(_id);
+          // On amène l'utilisateur à l'écran Lobby
+          props.navigation.navigate("Lobby",{
+            id : _id,
+            playerName : playerName,
+            role : 'host'
+          })
+          setPlayerName('');
+        }
       }
 
       const createGameDB = async (id:string) => {
@@ -87,7 +89,7 @@ export const Create  = (props:{navigation:any,route:any}) =>
                   </Text>
               </View>
               <TextInput placeholder="Votre pseudo" onChangeText={(text : string )=>setPlayerName(text)} value={playerName}> </TextInput>
-              <Button text="CREER" buttonStyle={styles.buttonStyle} onPress={()=>onSubmit()}/>
+              <Button text="CREER" textStyle={{fontSize : Dimensions.get('screen').width*0.06}} buttonStyle={styles.buttonStyle} onPress={()=>onSubmit()}/>
           </View>
       )
     

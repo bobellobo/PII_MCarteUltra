@@ -5,16 +5,29 @@ import {NavigationContainer} from "@react-navigation/native";
 import { Home } from '~/screens/Home';
 import { PartieLocal } from '~/screens/PartieLocal';
 import { RootNavigator } from '~/navigation/RootNavigator';
-
+import { useFonts } from '@use-expo/font';
+import  AppLoading  from 'expo';
 
 export default function App() {
-  return (   
-    <NavigationContainer>
-      <RootNavigator/>
-      <StatusBar style="auto" hidden={true}/>
-    </NavigationContainer>
 
-  );
+  let [fontsLoaded] = useFonts({
+    'Sirukota': require('./src/ressources/fonts/Sirukota.ttf')
+   });
+   
+   if(!fontsLoaded){
+     return(
+       <View><Text>BUAH</Text></View>
+     )
+   }
+   else{
+    return (   
+      <NavigationContainer>
+        <RootNavigator/>
+        <StatusBar style="auto" hidden={true}/>
+      </NavigationContainer>
+  
+    );
+   }
 }
 
 

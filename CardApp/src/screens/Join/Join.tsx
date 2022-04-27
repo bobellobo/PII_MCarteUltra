@@ -115,7 +115,7 @@ export const Join  = (props:JoinProps) =>
                 </View>
                 <TextInput placeholder="Game ID" onChangeText={(text:string)=>{setGameId(text)}} value={gameId}> </TextInput>
                 <TextInput placeholder="Votre pseudo" onChangeText={(text:string)=>{setPlayerName(text)}} value={playerName}> </TextInput>
-                <Button text="REJOINDRE" buttonStyle={styles.buttonStyle}onPress={()=>onSubmit()}/>
+                <Button text="REJOINDRE" textStyle={{fontSize : Dimensions.get('screen').width*0.06}}buttonStyle={styles.buttonStyle}onPress={()=>onSubmit()}/>
                 
             </View>
         )

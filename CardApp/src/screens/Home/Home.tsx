@@ -41,7 +41,7 @@ export const Home : React.FunctionComponent<HomeProps> = ({}) => {
     
     <View style={styles.container}>
         <View style={{alignItems:"center", justifyContent:'center',paddingVertical : Dimensions.get('screen').height/4, paddingHorizontal : 20,}}> 
-          <Text style={[styles.title,{fontSize:Dimensions.get('window').height/25, fontWeight:'bold',marginBottom:'5%'}]}>MCARTE ULTRA</Text>
+          <Text style={{fontSize:Dimensions.get('window').height/25, fontWeight:'bold',marginBottom:'5%'}}>MCARTE ULTRA</Text>
           <Button textStyle={styles.buttonText} text="MODE LOCAL" onPress={()=>navigation.navigate("CreatePartieLocal")}/>
           <Button textStyle={styles.buttonText} text="CREER" onPress={()=>navigation.navigate("Create")}/>
           <Button textStyle={styles.buttonText} text="REJOINDRE" onPress={()=>navigation.navigate("Join")}/>
@@ -58,10 +58,6 @@ const styles = StyleSheet.create({
     flex : 1,
     alignContent:'center',
     backgroundColor: colors.backGroundColor
-  },
-  title : {
-    fontSize:32,
-    fontWeight:'500'
   },
   buttonText : {
     fontSize: height*0.03,

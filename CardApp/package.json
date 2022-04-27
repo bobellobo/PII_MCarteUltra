@@ -17,6 +17,7 @@
     "@react-native-firebase/auth": "^14.5.1",
     "@react-navigation/native": "^6.0.8",
     "@react-navigation/native-stack": "^6.5.0",
+    "@use-expo/font": "^2.0.0",
     "expo": "~44.0.0",
     "expo-screen-orientation": "~4.1.1",
     "expo-status-bar": "~1.2.0",
