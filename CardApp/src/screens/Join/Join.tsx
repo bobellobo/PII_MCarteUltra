@@ -57,15 +57,16 @@ export const Join  = (props:JoinProps) =>
                 // Ecriture en BDD
                 // Navigation écran Lobby. 
 
-                database.ref('players/'+gameId+'/'+playerName).update({
-                    role : 'guest'
-                })
 
                 if(playerName==''){
                     console.log('Player name is not valid.');
                     setInvalidPlayerName(true)                
                 }
                 else{
+                    
+                    database.ref('players/'+gameId+'/'+playerName).update({
+                        role : 'guest'
+                    })
                     if(status=='lobby'){
                         props.navigation.navigate("Lobby",{
                             id : gameId,

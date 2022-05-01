@@ -238,8 +238,8 @@ const styles = StyleSheet.create({
     fontWeight:'400',
   },
   card :{
-    height:380/Dimensions.get('window').scale,
-    width:255/Dimensions.get('window').scale,
+    height:380/Dimensions.get('window').scale*0.9,
+    width:255/Dimensions.get('window').scale*0.9,
     
   },
   cardWrapper :{
