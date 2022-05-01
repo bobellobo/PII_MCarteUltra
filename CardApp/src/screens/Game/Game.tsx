@@ -112,7 +112,7 @@ export const Game = (props:GameProps) =>
 
         console.log('Deck : ',deck)
 
-        await database.ref('games/'+gameId+'/').set({
+        await database.ref('games/'+gameId+'/').update({
             deck,
             lastCardPicked : ["BackCovers",3]
         })
@@ -330,6 +330,16 @@ export const Game = (props:GameProps) =>
         return _index;
     }
 
+    const getHost =  () =>{
+        let host ="l'hôte"
+        database.ref('games/'+gameId).child('host').once('value').then((snapshot)=>{
+            console.log(snapshot.val())
+            return snapshot.val();
+        });
+        
+        return host
+    }
+
 
 
 
@@ -437,13 +447,14 @@ export const Game = (props:GameProps) =>
         if(!isGameOver){
             if(deck!=null){
                 if(deck.cards.length==52){
+                    let host = getHost()
                     return(
                         <View style={styles.playersTurnWrapper}>
         
         
                             <View style={styles.firstRoundPlayerNameWrapper}>
                                 <Text style={styles.playerText}>
-                                    C'est à {host?.toUpperCase()} de tirer
+                                    C'est à {host} de tirer
                                 </Text>
                             </View>
         
